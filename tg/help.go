@@ -8,11 +8,12 @@ var helpMessages = []string{
 	removeHelpMessage,
 	addUserHelpMessage,
 	removeUserHelpMessage,
+	infoHelpMessage,
 	listHelpMessage,
 }
 
 func (b *Bot) SmallHelp() (string, bool) {
-	return "/tag <new|remove|add-user|remove-user|list> ...\nFor more information use /help", true
+	return "/tag <new|remove|add-user|remove-user|info|list> ...\nFor more information use /help", true
 }
 
 func (b *Bot) Help() (string, bool) {

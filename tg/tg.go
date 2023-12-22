@@ -148,6 +148,8 @@ func (b *Bot) command(ctx context.Context, chatID int64, command string, args st
 			return b.AddUsers(ctx, chatID, subcommandSplit...)
 		case "remove-user":
 			return b.RemoveUsers(ctx, chatID, subcommandSplit...)
+		case "info":
+			return b.Info(ctx, chatID, subcommandSplit...)
 		case "list":
 			return b.List(ctx, chatID)
 		}
