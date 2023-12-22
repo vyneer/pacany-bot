@@ -13,9 +13,9 @@ var helpMessages = []string{
 }
 
 func (b *Bot) SmallHelp() (string, bool) {
-	return "/tag <new|remove|add-user|remove-user|info|list> ...\nFor more information use /help", true
+	return "/tag <new|remove|add-user|remove-user|info|list> ...\n\nFor more information use /help", true
 }
 
 func (b *Bot) Help() (string, bool) {
-	return strings.Join(helpMessages, "\n"), true
+	return strings.Join(helpMessages, "\n\n"), true
 }
