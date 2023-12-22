@@ -68,7 +68,7 @@ func New(c *config.Config, tagDB *db.DB) (Bot, error) {
 }
 
 func (b *Bot) Run() error {
-	u := tgbotapi.NewUpdate(0)
+	u := tgbotapi.NewUpdate(-1)
 	u.Timeout = 60
 	u.AllowedUpdates = []string{"message", "chat_member"}
 	updates := b.api.GetUpdatesChan(u)
