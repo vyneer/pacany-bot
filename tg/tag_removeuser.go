@@ -13,7 +13,7 @@ const removeUserHelpMessage string = "/tag remove-user <tag_name> <username_1> <
 
 func (b *Bot) RemoveUsers(ctx context.Context, chatID int64, args ...string) (string, bool) {
 	if len(args) < 2 {
-		return "/tag remove-user <tag_name> <username_1> <username_2> ... <username_n>", true
+		return removeUserHelpMessage, true
 	}
 
 	name := args[1]
