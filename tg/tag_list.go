@@ -9,11 +9,11 @@ import (
 
 const listHelpMessage string = "/tag list - List all tags and their associated user count"
 
-func (b *Bot) List(ctx context.Context, chatID int64) string {
+func (b *Bot) List(ctx context.Context, chatID int64) (string, bool) {
 	tags, err := b.tagDB.GetTags(ctx, chatID)
 	if err != nil {
 		slog.Warn("unable to get tags", "err", err)
-		return err.Error()
+		return err.Error(), true
 	}
 
 	var tagNames []string
@@ -22,8 +22,8 @@ func (b *Bot) List(ctx context.Context, chatID int64) string {
 	}
 
 	if len(tagNames) == 0 {
-		return "No tags in this group chat"
+		return "No tags in this group chat", true
 	}
 
-	return strings.Join(tagNames, "\n")
+	return strings.Join(tagNames, "\n"), true
 }

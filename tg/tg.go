@@ -87,11 +87,13 @@ func (b *Bot) Run() error {
 		case update.Message != nil && update.Message.Chat.IsGroup():
 			chatID := update.Message.Chat.ID
 			text := update.Message.Text
+			username := update.Message.From.UserName
 
 			response := tgbotapi.NewMessage(update.Message.Chat.ID, "")
+			var reply bool
 
 			if !update.Message.IsCommand() {
-				response.Text = b.Scan(ctx, chatID, text)
+				response.Text, reply = b.Scan(ctx, chatID, username, text)
 			} else {
 				admins, err := b.getAdmins(ctx, update.Message.Chat.ChatConfig())
 				if err != nil {
@@ -102,11 +104,14 @@ func (b *Bot) Run() error {
 				if slices.ContainsFunc[[]tgbotapi.ChatMember](admins, func(cm tgbotapi.ChatMember) bool {
 					return cm.User.ID == update.Message.From.ID
 				}) {
-					response.Text = b.command(ctx, chatID, update.Message.Command(), update.Message.CommandArguments())
+					response.Text, reply = b.command(ctx, chatID, update.Message.Command(), update.Message.CommandArguments())
 				}
 			}
 
 			response.Text = b.capitalize(response.Text)
+			if reply {
+				response.ReplyToMessageID = update.Message.MessageID
+			}
 
 			if len(response.Text) != 0 {
 				if _, err := b.api.Send(response); err != nil {
@@ -119,7 +124,7 @@ func (b *Bot) Run() error {
 	return nil
 }
 
-func (b *Bot) command(ctx context.Context, chatID int64, command string, args string) string {
+func (b *Bot) command(ctx context.Context, chatID int64, command string, args string) (string, bool) {
 	slog.Debug("running command", "chatID", chatID, "command", command)
 
 	switch command {
@@ -148,7 +153,7 @@ func (b *Bot) command(ctx context.Context, chatID int64, command string, args st
 		}
 	}
 
-	return ""
+	return "", false
 }
 
 func (b *Bot) getAdmins(ctx context.Context, c tgbotapi.ChatConfig) ([]tgbotapi.ChatMember, error) {
@@ -188,7 +193,7 @@ func (b *Bot) isValidUserName(username string) bool {
 	return strings.HasPrefix(username, "@") && len(username) > 1
 }
 
-func (b *Bot) filterUsernames(usernames []string) []string {
+func (b *Bot) filterInvalidUsernames(usernames []string) []string {
 	var validUsernames []string
 
 	for _, v := range usernames {
@@ -198,6 +203,18 @@ func (b *Bot) filterUsernames(usernames []string) []string {
 	}
 
 	return validUsernames
+}
+
+func (b *Bot) filterMentions(mentions string, ignore string) (string, bool) {
+	var filteredMentions []string
+
+	for _, v := range strings.Fields(mentions) {
+		if strings.TrimPrefix(v, "@") != ignore {
+			filteredMentions = append(filteredMentions, v)
+		}
+	}
+
+	return strings.Join(filteredMentions, " "), len(filteredMentions) > 0
 }
 
 func (b *Bot) isValidTagName(name string) bool {

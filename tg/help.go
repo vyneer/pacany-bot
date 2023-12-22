@@ -11,10 +11,10 @@ var helpMessages = []string{
 	listHelpMessage,
 }
 
-func (b *Bot) SmallHelp() string {
-	return "/tag <new|remove|add-user|remove-user|list> ...\nFor more information use /help"
+func (b *Bot) SmallHelp() (string, bool) {
+	return "/tag <new|remove|add-user|remove-user|list> ...\nFor more information use /help", true
 }
 
-func (b *Bot) Help() string {
-	return strings.Join(helpMessages, "\n")
+func (b *Bot) Help() (string, bool) {
+	return strings.Join(helpMessages, "\n"), true
 }
