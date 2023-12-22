@@ -32,14 +32,10 @@ type DB struct {
 	gormdb *gorm.DB
 }
 
-type Chat struct {
-	ID int64 `gorm:"uniqueIndex"`
-}
-
 type Tag struct {
 	gorm.Model
-	ChatID   int64  `gorm:"uniqueIndex"`
-	Name     string `gorm:"uniqueIndex"`
+	ChatID   int64  `gorm:"index:idx_chatid_name,unique"`
+	Name     string `gorm:"index:idx_chatid_name,unique"`
 	Mentions string
 }
 
