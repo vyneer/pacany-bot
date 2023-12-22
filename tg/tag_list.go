@@ -18,7 +18,13 @@ func (b *Bot) List(ctx context.Context, chatID int64) (string, bool) {
 
 	var tagNames []string
 	for _, v := range tags {
-		tagNames = append(tagNames, fmt.Sprintf("%s - %d users", v.Name, len(strings.Fields(v.Mentions))))
+		l := len(strings.Fields(v.Mentions))
+		tagNames = append(tagNames, fmt.Sprintf("%s - %d user%s", v.Name, l, func() string {
+			if l != 1 {
+				return "s"
+			}
+			return ""
+		}()))
 	}
 
 	if len(tagNames) == 0 {

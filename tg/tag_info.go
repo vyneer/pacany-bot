@@ -39,7 +39,7 @@ func (b *Bot) Info(ctx context.Context, chatID int64, args ...string) (string, b
 	fields := strings.Fields(tags[i].Mentions)
 	info = append(info, fmt.Sprintf("Tag name: %s", tags[i].Name))
 	info = append(info, fmt.Sprintf("User count: %d", len(fields)))
-	info = append(info, "Users:")
+	info = append(info, "User list:")
 	for _, v := range fields {
 		info = append(info, fmt.Sprintf("- %s", strings.TrimPrefix(v, "@")))
 	}
