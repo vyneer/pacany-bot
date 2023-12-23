@@ -23,10 +23,10 @@ func FilterInvalidUsernames(usernames []string) []string {
 	return validUsernames
 }
 
-func FilterMentions(mentions string, ignore string) (string, bool) {
+func FilterMentions(mentions []string, ignore string) (string, bool) {
 	var filteredMentions []string
 
-	for _, v := range strings.Fields(mentions) {
+	for _, v := range mentions {
 		if strings.TrimPrefix(v, "@") != ignore {
 			filteredMentions = append(filteredMentions, v)
 		}

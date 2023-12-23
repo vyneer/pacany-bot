@@ -60,18 +60,23 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 
 	fields := strings.Fields(text)
 
+	var allMentions []string
 	for _, v := range tags {
 		if slices.Contains[[]string](fields, v.Name) {
-			if filtered, ok := util.FilterMentions(v.Mentions, username); ok {
-				return implementation.CommandResponse{
-					Text:  filtered,
-					Reply: false,
-				}
-			}
+			allMentions = append(allMentions, strings.Fields(v.Mentions)...)
+		}
+	}
+
+	if len(allMentions) > 0 {
+		if filtered, ok := util.FilterMentions(allMentions, username); ok {
 			return implementation.CommandResponse{
-				Text:  "You're the only person using this tag",
-				Reply: true,
+				Text:  filtered,
+				Reply: false,
 			}
+		}
+		return implementation.CommandResponse{
+			Text:  "You're the only person using this tag",
+			Reply: true,
 		}
 	}
 
