@@ -13,7 +13,7 @@ import (
 const (
 	name              string = "rename"
 	parentName        string = "tag"
-	help              string = "Renames the specified tag"
+	help              string = "Rename the specified tag"
 	helpOrder         int    = 2
 	shape             string = "/tagrename <tag_old_name> <tag_new_name>"
 	showInCommandList bool   = true
