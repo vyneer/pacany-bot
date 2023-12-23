@@ -91,7 +91,7 @@ func (b *Bot) Run() error {
 				slog.Warn("unable to update admin list", "err", err)
 				continue
 			}
-		case update.Message != nil && update.Message.Chat.IsGroup():
+		case update.Message != nil && (update.Message.Chat.IsGroup() || update.Message.Chat.IsSuperGroup()):
 			chatID := update.Message.Chat.ID
 			text := update.Message.Text
 			username := update.Message.From.UserName
