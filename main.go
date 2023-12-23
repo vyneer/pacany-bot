@@ -7,6 +7,8 @@ import (
 	"github.com/vyneer/tg-tagbot/config"
 	"github.com/vyneer/tg-tagbot/db"
 	"github.com/vyneer/tg-tagbot/tg"
+	_ "github.com/vyneer/tg-tagbot/tg/commands/help"
+	_ "github.com/vyneer/tg-tagbot/tg/commands/tag"
 )
 
 func main() {

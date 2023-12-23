@@ -2,10 +2,8 @@ package tg
 
 import (
 	"context"
-	"errors"
 	"log"
 	"log/slog"
-	"regexp"
 	"slices"
 	"strings"
 	"time"
@@ -17,13 +15,7 @@ import (
 	gocache "github.com/patrickmn/go-cache"
 	"github.com/vyneer/tg-tagbot/config"
 	"github.com/vyneer/tg-tagbot/db"
-)
-
-var (
-	prefixRegex = regexp.MustCompile(`(?i)^[@%#!&]{1}`)
-
-	ErrInvalidTag   = errors.New("invalid tag: only @%#!& can be used")
-	ErrNoValidUsers = errors.New("no valid users provided")
+	"github.com/vyneer/tg-tagbot/tg/commands/implementation"
 )
 
 type Bot struct {
@@ -42,16 +34,20 @@ func New(c *config.Config, tagDB *db.DB) (Bot, error) {
 
 	slog.Debug("authorized on bot", "account", bot.Self.UserName)
 
+	var botCmds []tgbotapi.BotCommand
+	for _, v := range implementation.Map {
+		desc := v.GetDescription()
+		if len(desc) != 0 && len(v.GetParentName()) == 0 {
+			botCmds = append(botCmds, tgbotapi.BotCommand{
+				Command:     v.GetName(),
+				Description: desc,
+			})
+		}
+	}
+
 	if _, err := bot.Request(tgbotapi.NewSetMyCommandsWithScope(
 		tgbotapi.NewBotCommandScopeAllChatAdministrators(),
-		tgbotapi.BotCommand{
-			Command:     "help",
-			Description: "Prints help",
-		},
-		tgbotapi.BotCommand{
-			Command:     "tag",
-			Description: "Manage tags",
-		},
+		botCmds...,
 	)); err != nil {
 		return Bot{}, err
 	}
@@ -89,11 +85,17 @@ func (b *Bot) Run() error {
 			text := update.Message.Text
 			username := update.Message.From.UserName
 
-			response := tgbotapi.NewMessage(update.Message.Chat.ID, "")
-			var reply bool
+			var commandResponse implementation.CommandResponse
 
 			if !update.Message.IsCommand() {
-				response.Text, reply = b.Scan(ctx, chatID, username, text)
+				commandResponse = implementation.Map["tag scan"].Run(ctx, implementation.CommandArgs{
+					DB:     b.tagDB,
+					ChatID: chatID,
+					Args: []string{
+						username,
+						text,
+					},
+				})
 			} else {
 				admins, err := b.getAdmins(ctx, update.Message.Chat.ChatConfig())
 				if err != nil {
@@ -104,12 +106,13 @@ func (b *Bot) Run() error {
 				if slices.ContainsFunc[[]tgbotapi.ChatMember](admins, func(cm tgbotapi.ChatMember) bool {
 					return cm.User.ID == update.Message.From.ID
 				}) {
-					response.Text, reply = b.command(ctx, chatID, update.Message.Command(), update.Message.CommandArguments())
+					commandResponse = b.command(ctx, chatID, update.Message.Command(), update.Message.CommandArguments())
 				}
 			}
 
-			response.Text = b.capitalize(response.Text)
-			if reply {
+			response := tgbotapi.NewMessage(update.Message.Chat.ID, "")
+			response.Text = b.capitalize(commandResponse.Text)
+			if commandResponse.Reply {
 				response.ReplyToMessageID = update.Message.MessageID
 			}
 
@@ -124,38 +127,29 @@ func (b *Bot) Run() error {
 	return nil
 }
 
-func (b *Bot) command(ctx context.Context, chatID int64, command string, args string) (string, bool) {
-	slog.Debug("running command", "chatID", chatID, "command", command)
+func (b *Bot) command(ctx context.Context, chatID int64, command string, args string) implementation.CommandResponse {
+	argsSplit := strings.Fields(args)
+	subcommand := ""
+	if len(argsSplit) > 0 {
+		subcommand = argsSplit[0]
+		argsSplit = argsSplit[1:]
+	}
 
-	switch command {
-	case "help":
-		return b.Help()
-	case "tag":
-		subcommandSplit := strings.Fields(args)
-		if len(subcommandSplit) < 1 || subcommandSplit[0] == "" {
-			return b.SmallHelp()
-		}
-		subcommand := subcommandSplit[0]
-
-		slog.Debug("running subcommand", "chatID", chatID, "command", command, "subcommand", subcommand, "args", args)
-
-		switch subcommand {
-		case "new":
-			return b.NewTag(ctx, chatID, subcommandSplit...)
-		case "remove":
-			return b.RemoveTag(ctx, chatID, subcommandSplit...)
-		case "add-user":
-			return b.AddUsers(ctx, chatID, subcommandSplit...)
-		case "remove-user":
-			return b.RemoveUsers(ctx, chatID, subcommandSplit...)
-		case "info":
-			return b.Info(ctx, chatID, subcommandSplit...)
-		case "list":
-			return b.List(ctx, chatID)
+	cmd := implementation.GetCommand(command, subcommand)
+	if cmd == nil {
+		return implementation.CommandResponse{
+			Text:  "",
+			Reply: false,
 		}
 	}
 
-	return "", false
+	slog.Debug("running command", "chatID", chatID, "command", command, "subcommand", subcommand)
+
+	return cmd.Run(ctx, implementation.CommandArgs{
+		DB:     b.tagDB,
+		ChatID: chatID,
+		Args:   argsSplit,
+	})
 }
 
 func (b *Bot) getAdmins(ctx context.Context, c tgbotapi.ChatConfig) ([]tgbotapi.ChatMember, error) {
@@ -189,38 +183,6 @@ func (b *Bot) setAdmins(ctx context.Context, c tgbotapi.ChatConfig) ([]tgbotapi.
 	}
 
 	return admins, nil
-}
-
-func (b *Bot) isValidUserName(username string) bool {
-	return strings.HasPrefix(username, "@") && len(username) > 1
-}
-
-func (b *Bot) filterInvalidUsernames(usernames []string) []string {
-	var validUsernames []string
-
-	for _, v := range usernames {
-		if b.isValidUserName(v) {
-			validUsernames = append(validUsernames, v)
-		}
-	}
-
-	return validUsernames
-}
-
-func (b *Bot) filterMentions(mentions string, ignore string) (string, bool) {
-	var filteredMentions []string
-
-	for _, v := range strings.Fields(mentions) {
-		if strings.TrimPrefix(v, "@") != ignore {
-			filteredMentions = append(filteredMentions, v)
-		}
-	}
-
-	return strings.Join(filteredMentions, " "), len(filteredMentions) > 0
-}
-
-func (b *Bot) isValidTagName(name string) bool {
-	return prefixRegex.MatchString(name) && len(name) > 1
 }
 
 func (b *Bot) capitalize(s string) string {
