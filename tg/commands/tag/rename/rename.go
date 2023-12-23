@@ -67,6 +67,11 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 		return resp
 	}
 
+	if oldName == newName {
+		resp.Text = "Identical name provided"
+		return resp
+	}
+
 	err := a.DB.RenameTag(ctx, a.ChatID, oldName, newName)
 	if err != nil {
 		slog.Warn("unable to rename tag", "err", err)

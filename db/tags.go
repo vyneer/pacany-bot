@@ -76,9 +76,10 @@ func (db *DB) AddMentionsToTag(ctx context.Context, chatID int64, name string, m
 	}
 
 	oldMentions := strings.Fields(oldTag.Mentions)
+	oldMentionsLower := strings.Fields(strings.ToLower(oldTag.Mentions))
 	l := len(oldMentions)
 	for _, v := range mentions {
-		if !slices.Contains[[]string](oldMentions, v) {
+		if !slices.Contains[[]string](oldMentionsLower, strings.ToLower(v)) {
 			oldMentions = append(oldMentions, v)
 		}
 	}
@@ -99,6 +100,8 @@ func (db *DB) AddMentionsToTag(ctx context.Context, chatID int64, name string, m
 }
 
 func (db *DB) RemoveMentionsFromTag(ctx context.Context, chatID int64, name string, mentions ...string) error {
+	mentionsLower := strings.Fields(strings.ToLower(strings.Join(mentions, " ")))
+
 	oldTag, err := db.getTag(chatID, name)
 	if err != nil {
 		return err
@@ -107,7 +110,7 @@ func (db *DB) RemoveMentionsFromTag(ctx context.Context, chatID int64, name stri
 	var newMentions []string
 	oldMentions := strings.Fields(oldTag.Mentions)
 	for _, v := range oldMentions {
-		if i := slices.Index[[]string](mentions, v); i == -1 {
+		if i := slices.Index[[]string](mentionsLower, strings.ToLower(v)); i == -1 {
 			newMentions = append(newMentions, v)
 		}
 	}

@@ -13,10 +13,12 @@ func IsValidUserName(username string) bool {
 
 func FilterInvalidUsernames(usernames []string) []string {
 	var validUsernames []string
+	usernameMap := map[string]struct{}{}
 
 	for _, v := range usernames {
-		if IsValidUserName(v) {
+		if _, ok := usernameMap[strings.ToLower(v)]; IsValidUserName(v) && !ok {
 			validUsernames = append(validUsernames, v)
+			usernameMap[strings.ToLower(v)] = struct{}{}
 		}
 	}
 
@@ -25,10 +27,12 @@ func FilterInvalidUsernames(usernames []string) []string {
 
 func FilterMentions(mentions []string, ignore string) (string, bool) {
 	var filteredMentions []string
+	mentionsMap := map[string]struct{}{}
 
 	for _, v := range mentions {
-		if strings.TrimPrefix(v, "@") != ignore {
+		if _, ok := mentionsMap[strings.ToLower(v)]; strings.TrimPrefix(strings.ToLower(v), "@") != strings.ToLower(ignore) && !ok {
 			filteredMentions = append(filteredMentions, v)
+			mentionsMap[strings.ToLower(v)] = struct{}{}
 		}
 	}
 
