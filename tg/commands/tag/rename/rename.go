@@ -1,23 +1,21 @@
-package removeuser
+package rename
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 
-	"github.com/vyneer/tg-tagbot/db"
 	"github.com/vyneer/tg-tagbot/tg/commands/implementation"
 	tag_errors "github.com/vyneer/tg-tagbot/tg/commands/tag/internal/errors"
 	"github.com/vyneer/tg-tagbot/tg/commands/tag/internal/util"
 )
 
 const (
-	name              string = "removeuser"
+	name              string = "rename"
 	parentName        string = "tag"
-	help              string = "Remove specified users from an existing tag"
-	helpOrder         int    = 4
-	shape             string = "/tagremoveuser <tag_name> <username_1> <username_2> ... <username_n>"
+	help              string = "Renames the specified tag"
+	helpOrder         int    = 2
+	shape             string = "/tagrename <tag_old_name> <tag_new_name>"
 	showInCommandList bool   = true
 )
 
@@ -51,45 +49,31 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 		Reply: true,
 	}
 
-	if len(a.Args) < 2 {
+	if len(a.Args) != 2 {
 		resp.Text, _ = c.GetHelp()
 		return resp
 	}
 
-	name := a.Args[0]
-	if !util.IsValidTagName(name) {
+	oldName := a.Args[0]
+	if !util.IsValidTagName(oldName) {
 		resp.Text = tag_errors.ErrInvalidTag.Error()
 		return resp
 	}
-	mentions := util.FilterInvalidUsernames(a.Args[1:])
-	if len(mentions) == 0 {
-		resp.Text = tag_errors.ErrNoValidUsers.Error()
+
+	newName := a.Args[1]
+	if !util.IsValidTagName(newName) {
+		resp.Text = tag_errors.ErrInvalidTag.Error()
 		return resp
 	}
 
-	err := a.DB.RemoveMentionsFromTag(ctx, a.ChatID, name, mentions...)
+	err := a.DB.RenameTag(ctx, a.ChatID, oldName, newName)
 	if err != nil {
-		if errors.Is(err, db.ErrEmptyTag) {
-			err := a.DB.RemoveTag(ctx, a.ChatID, name)
-			if err != nil {
-				slog.Warn("unable to remove tag", "err", err)
-				resp.Text = err.Error()
-				return resp
-			}
-			resp.Text = fmt.Sprintf("Removed tag \"%s\"", name)
-			return resp
-		}
-		slog.Warn("unable to add mentions to tag", "err", err)
+		slog.Warn("unable to rename tag", "err", err)
 		resp.Text = err.Error()
 		return resp
 	}
 
-	resp.Text = fmt.Sprintf("Removed user%s from tag \"%s\"", func() string {
-		if len(mentions) != 1 {
-			return "s"
-		}
-		return ""
-	}(), name)
+	resp.Text = fmt.Sprintf("Renamed tag \"%s\" to \"%s\"", oldName, newName)
 
 	return resp
 }

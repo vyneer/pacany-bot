@@ -11,45 +11,37 @@ import (
 )
 
 const (
-	name        string = "remove"
-	parentName  string = "tag"
-	help        string = "/tag remove <tag_name> - Remove the specified tag"
-	helpOrder   int    = 2
-	description string = ""
+	name              string = "remove"
+	parentName        string = "tag"
+	help              string = "Remove the specified tag"
+	helpOrder         int    = 1
+	shape             string = "/tagremove <tag_name>"
+	showInCommandList bool   = true
 )
 
-type Command struct {
-	name        string
-	parentName  string
-	help        string
-	helpOrder   int
-	description string
-}
+type Command struct{}
 
 func New() implementation.Command {
-	return &Command{
-		name:        name,
-		parentName:  parentName,
-		help:        help,
-		helpOrder:   helpOrder,
-		description: description,
-	}
+	return &Command{}
 }
 
 func (c *Command) GetName() string {
-	return c.name
+	return name
 }
 
 func (c *Command) GetParentName() string {
-	return c.parentName
+	return parentName
 }
 
 func (c *Command) GetHelp() (string, int) {
-	return c.help, c.helpOrder
+	return fmt.Sprintf("%s - %s", shape, help), helpOrder
 }
 
 func (c *Command) GetDescription() string {
-	return c.description
+	if !showInCommandList {
+		return ""
+	}
+	return fmt.Sprintf("%s - %s", help, shape)
 }
 
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {
@@ -58,7 +50,7 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 	}
 
 	if len(a.Args) != 1 {
-		resp.Text = c.help
+		resp.Text, _ = c.GetHelp()
 		return resp
 	}
 

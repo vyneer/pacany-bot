@@ -1,18 +1,20 @@
-package help
+package tag
 
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/vyneer/tg-tagbot/tg/commands/implementation"
 )
 
 const (
-	name              string = "help"
-	parentName        string = ""
-	help              string = "Print help"
+	name              string = "tag"
+	parentName        string = "help"
+	help              string = "Print help for the tag commands"
 	helpOrder         int    = -1
-	shape             string = "/help"
+	shape             string = "/helptag"
 	showInCommandList bool   = true
 )
 
@@ -42,8 +44,31 @@ func (c *Command) GetDescription() string {
 }
 
 func (c *Command) Run(_ context.Context, _ implementation.CommandArgs) implementation.CommandResponse {
+	helpMap := map[int]string{}
+
+	for _, v := range implementation.Interactable {
+		if v.GetParentName() != "tag" {
+			continue
+		}
+		helpString, order := v.GetHelp()
+		if order != -1 {
+			helpMap[order] = helpString
+		}
+	}
+
+	keys := make([]int, 0, len(helpMap))
+	for k := range helpMap {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
+
+	helpSlice := make([]string, 0, len(helpMap))
+	for _, i := range keys {
+		helpSlice = append(helpSlice, helpMap[i])
+	}
+
 	return implementation.CommandResponse{
-		Text:  "Multi-purpose Telegram bot, check other help commands for more details.\n\nCurrently supported functions:\n- tagging",
+		Text:  strings.Join(helpSlice, "\n\n"),
 		Reply: true,
 	}
 }

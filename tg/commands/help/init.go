@@ -1,7 +1,11 @@
 package help
 
-import "github.com/vyneer/tg-tagbot/tg/commands/implementation"
+import (
+	"github.com/vyneer/tg-tagbot/tg/commands/help/tag"
+	"github.com/vyneer/tg-tagbot/tg/commands/implementation"
+)
 
 func init() {
-	implementation.CreateCommand(New)
+	implementation.CreateInteractableCommand(New)
+	implementation.CreateInteractableCommand(tag.New)
 }

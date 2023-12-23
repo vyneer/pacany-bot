@@ -7,7 +7,10 @@ import (
 	"github.com/vyneer/tg-tagbot/db"
 )
 
-var Map = map[string]Command{}
+var (
+	Interactable = map[string]Command{}
+	Automatic    = map[string]Command{}
+)
 
 type CommandArgs struct {
 	DB     *db.DB
@@ -28,23 +31,22 @@ type Command interface {
 	GetDescription() string
 }
 
-func CreateCommand(cmd func() Command) {
+func CreateInteractableCommand(cmd func() Command) {
 	c := cmd()
 
-	if len(c.GetParentName()) == 0 {
-		Map[c.GetName()] = c
-		return
-	}
-
-	Map[fmt.Sprintf("%s %s", c.GetParentName(), c.GetName())] = c
+	Interactable[fmt.Sprintf("%s%s", c.GetParentName(), c.GetName())] = c
 }
 
-func GetCommand(command, subcommand string) Command {
-	key := fmt.Sprintf("%s %s", command, subcommand)
+func CreateAutomaticCommand(cmd func() Command) {
+	c := cmd()
 
-	if len(subcommand) == 0 {
-		key = command
-	}
+	Automatic[fmt.Sprintf("%s%s", c.GetParentName(), c.GetName())] = c
+}
 
-	return Map[key]
+func GetInteractableCommand(command string) Command {
+	return Interactable[command]
+}
+
+func GetAutomaticCommand(command string) Command {
+	return Automatic[command]
 }

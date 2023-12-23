@@ -2,6 +2,7 @@ package scan
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"slices"
 	"strings"
@@ -11,45 +12,37 @@ import (
 )
 
 const (
-	name        string = "scan"
-	parentName  string = "tag"
-	help        string = ""
-	helpOrder   int    = -1
-	description string = ""
+	name              string = "scan"
+	parentName        string = "tag"
+	help              string = ""
+	helpOrder         int    = -1
+	shape             string = ""
+	showInCommandList bool   = false
 )
 
-type Command struct {
-	name        string
-	parentName  string
-	help        string
-	helpOrder   int
-	description string
-}
+type Command struct{}
 
 func New() implementation.Command {
-	return &Command{
-		name:        name,
-		parentName:  parentName,
-		help:        help,
-		helpOrder:   helpOrder,
-		description: description,
-	}
+	return &Command{}
 }
 
 func (c *Command) GetName() string {
-	return c.name
+	return name
 }
 
 func (c *Command) GetParentName() string {
-	return c.parentName
+	return parentName
 }
 
 func (c *Command) GetHelp() (string, int) {
-	return c.help, c.helpOrder
+	return fmt.Sprintf("%s - %s", shape, help), helpOrder
 }
 
 func (c *Command) GetDescription() string {
-	return c.description
+	if !showInCommandList {
+		return ""
+	}
+	return fmt.Sprintf("%s - %s", help, shape)
 }
 
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {

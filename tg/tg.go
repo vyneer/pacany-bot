@@ -35,11 +35,11 @@ func New(c *config.Config, tagDB *db.DB) (Bot, error) {
 	slog.Debug("authorized on bot", "account", bot.Self.UserName)
 
 	var botCmds []tgbotapi.BotCommand
-	for _, v := range implementation.Map {
+	for _, v := range implementation.Interactable {
 		desc := v.GetDescription()
-		if len(desc) != 0 && len(v.GetParentName()) == 0 {
+		if len(desc) != 0 {
 			botCmds = append(botCmds, tgbotapi.BotCommand{
-				Command:     v.GetName(),
+				Command:     v.GetParentName() + v.GetName(),
 				Description: desc,
 			})
 		}
@@ -88,7 +88,7 @@ func (b *Bot) Run() error {
 			var commandResponse implementation.CommandResponse
 
 			if !update.Message.IsCommand() {
-				commandResponse = implementation.Map["tag scan"].Run(ctx, implementation.CommandArgs{
+				commandResponse = implementation.GetAutomaticCommand("tagscan").Run(ctx, implementation.CommandArgs{
 					DB:     b.tagDB,
 					ChatID: chatID,
 					Args: []string{
@@ -129,13 +129,8 @@ func (b *Bot) Run() error {
 
 func (b *Bot) command(ctx context.Context, chatID int64, command string, args string) implementation.CommandResponse {
 	argsSplit := strings.Fields(args)
-	subcommand := ""
-	if len(argsSplit) > 0 {
-		subcommand = argsSplit[0]
-		argsSplit = argsSplit[1:]
-	}
 
-	cmd := implementation.GetCommand(command, subcommand)
+	cmd := implementation.GetInteractableCommand(command)
 	if cmd == nil {
 		return implementation.CommandResponse{
 			Text:  "",
@@ -143,7 +138,7 @@ func (b *Bot) command(ctx context.Context, chatID int64, command string, args st
 		}
 	}
 
-	slog.Debug("running command", "chatID", chatID, "command", command, "subcommand", subcommand)
+	slog.Debug("running command", "chatID", chatID, "command", command)
 
 	return cmd.Run(ctx, implementation.CommandArgs{
 		DB:     b.tagDB,
