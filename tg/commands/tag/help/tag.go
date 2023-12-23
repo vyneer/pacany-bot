@@ -1,4 +1,4 @@
-package tag
+package help
 
 import (
 	"context"
@@ -10,11 +10,11 @@ import (
 )
 
 const (
-	name              string = "tag"
-	parentName        string = "help"
+	name              string = "help"
+	parentName        string = "tag"
 	help              string = "Print help for the tag commands"
 	helpOrder         int    = -1
-	shape             string = "/helptag"
+	shape             string = "/taghelp"
 	showInCommandList bool   = true
 )
 
@@ -47,7 +47,7 @@ func (c *Command) Run(_ context.Context, _ implementation.CommandArgs) implement
 	helpMap := map[int]string{}
 
 	for _, v := range implementation.Interactable {
-		if v.GetParentName() != "tag" {
+		if v.GetParentName() != parentName {
 			continue
 		}
 		helpString, order := v.GetHelp()

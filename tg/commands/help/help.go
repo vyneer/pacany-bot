@@ -43,7 +43,7 @@ func (c *Command) GetDescription() string {
 
 func (c *Command) Run(_ context.Context, _ implementation.CommandArgs) implementation.CommandResponse {
 	return implementation.CommandResponse{
-		Text:  "Multi-purpose Telegram bot, check other help commands for more details.\n\nCurrently supported functions:\n- tagging",
+		Text:  "Multi-purpose Telegram bot, check other help commands for more details.\n\nCurrently supported functions:\n- tagging (/taghelp)",
 		Reply: true,
 	}
 }

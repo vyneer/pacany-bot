@@ -4,6 +4,7 @@ import (
 	"github.com/vyneer/tg-tagbot/tg/commands/implementation"
 	"github.com/vyneer/tg-tagbot/tg/commands/tag/add"
 	"github.com/vyneer/tg-tagbot/tg/commands/tag/adduser"
+	"github.com/vyneer/tg-tagbot/tg/commands/tag/help"
 	"github.com/vyneer/tg-tagbot/tg/commands/tag/info"
 	"github.com/vyneer/tg-tagbot/tg/commands/tag/remove"
 	"github.com/vyneer/tg-tagbot/tg/commands/tag/removeuser"
@@ -12,6 +13,7 @@ import (
 )
 
 func init() {
+	implementation.CreateInteractableCommand(help.New)
 	implementation.CreateInteractableCommand(add.New)
 	implementation.CreateInteractableCommand(remove.New)
 	implementation.CreateInteractableCommand(rename.New)
