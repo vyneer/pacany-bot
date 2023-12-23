@@ -19,6 +19,7 @@ const (
 	help              string = "Get tag list, or, if a tag is specified, its user count and user list"
 	helpOrder         int    = 5
 	shape             string = "/taginfo or /taginfo <tag_name>"
+	descriptionOrder  int    = 7
 	showInCommandList bool   = true
 )
 
@@ -40,11 +41,11 @@ func (c *Command) GetHelp() (string, int) {
 	return fmt.Sprintf("%s - %s", shape, help), helpOrder
 }
 
-func (c *Command) GetDescription() string {
+func (c *Command) GetDescription() (string, int) {
 	if !showInCommandList {
-		return ""
+		return "", descriptionOrder
 	}
-	return fmt.Sprintf("%s - %s", help, shape)
+	return fmt.Sprintf("%s - %s", help, shape), descriptionOrder
 }
 
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {

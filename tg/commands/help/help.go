@@ -13,6 +13,7 @@ const (
 	help              string = "Print help"
 	helpOrder         int    = -1
 	shape             string = "/help"
+	descriptionOrder  int    = 0
 	showInCommandList bool   = true
 )
 
@@ -34,11 +35,11 @@ func (c *Command) GetHelp() (string, int) {
 	return fmt.Sprintf("%s - %s", shape, help), helpOrder
 }
 
-func (c *Command) GetDescription() string {
+func (c *Command) GetDescription() (string, int) {
 	if !showInCommandList {
-		return ""
+		return "", descriptionOrder
 	}
-	return fmt.Sprintf("%s - %s", help, shape)
+	return fmt.Sprintf("%s - %s", help, shape), descriptionOrder
 }
 
 func (c *Command) Run(_ context.Context, _ implementation.CommandArgs) implementation.CommandResponse {

@@ -28,7 +28,7 @@ type Command interface {
 	GetName() string
 	GetParentName() string
 	GetHelp() (string, int)
-	GetDescription() string
+	GetDescription() (string, int)
 }
 
 func CreateInteractableCommand(cmd func() Command) {

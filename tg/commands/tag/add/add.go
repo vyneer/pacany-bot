@@ -15,7 +15,8 @@ const (
 	parentName        string = "tag"
 	help              string = "Add a new tag"
 	helpOrder         int    = 0
-	shape             string = "/tagadd <tag_name> <username_1> <username_2> ... <username_n>"
+	shape             string = "/tagadd <tag_name> <username> ..."
+	descriptionOrder  int    = 2
 	showInCommandList bool   = true
 )
 
@@ -37,11 +38,11 @@ func (c *Command) GetHelp() (string, int) {
 	return fmt.Sprintf("%s - %s", shape, help), helpOrder
 }
 
-func (c *Command) GetDescription() string {
+func (c *Command) GetDescription() (string, int) {
 	if !showInCommandList {
-		return ""
+		return "", descriptionOrder
 	}
-	return fmt.Sprintf("%s - %s", help, shape)
+	return fmt.Sprintf("%s - %s", help, shape), descriptionOrder
 }
 
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {

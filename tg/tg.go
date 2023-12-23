@@ -34,20 +34,31 @@ func New(c *config.Config, tagDB *db.DB) (Bot, error) {
 
 	slog.Debug("authorized on bot", "account", bot.Self.UserName)
 
-	var botCmds []tgbotapi.BotCommand
+	botCmdsMap := map[int]tgbotapi.BotCommand{}
 	for _, v := range implementation.Interactable {
-		desc := v.GetDescription()
-		if len(desc) != 0 {
-			botCmds = append(botCmds, tgbotapi.BotCommand{
+		desc, order := v.GetDescription()
+		if order != -1 {
+			botCmdsMap[order] = tgbotapi.BotCommand{
 				Command:     v.GetParentName() + v.GetName(),
 				Description: desc,
-			})
+			}
 		}
+	}
+
+	keys := make([]int, 0, len(botCmdsMap))
+	for k := range botCmdsMap {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
+
+	botCmdSlice := make([]tgbotapi.BotCommand, 0, len(botCmdsMap))
+	for _, i := range keys {
+		botCmdSlice = append(botCmdSlice, botCmdsMap[i])
 	}
 
 	if _, err := bot.Request(tgbotapi.NewSetMyCommandsWithScope(
 		tgbotapi.NewBotCommandScopeAllChatAdministrators(),
-		botCmds...,
+		botCmdSlice...,
 	)); err != nil {
 		return Bot{}, err
 	}
