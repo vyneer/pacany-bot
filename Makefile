@@ -1,7 +1,7 @@
 .PHONY: FORCE
 
 TARGET_FOLDER = ./target
-BINARY = tg-tagbot
+BINARY = pacani-bot
 GOPATH = ${shell go env GOPATH}
 BIN_PATH = ${GOPATH}/bin
 GOLANGCI_LINT = ${BIN_PATH}/golangci-lint

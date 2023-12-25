@@ -10,7 +10,7 @@ import (
 	gocache "github.com/patrickmn/go-cache"
 	"gorm.io/gorm"
 
-	"github.com/vyneer/tg-tagbot/config"
+	"github.com/vyneer/pacani-bot/config"
 )
 
 type DB struct {

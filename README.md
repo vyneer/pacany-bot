@@ -1,6 +1,6 @@
-# tg-tagbot
+# pacani-bot
 
-lidl telegram bot that mentions tagged groups of people
+lidl multi-purpose bot for telegram group chats
 
 ## Setup
 
@@ -8,4 +8,4 @@ lidl telegram bot that mentions tagged groups of people
 2. ```vim .env```
 3. ```direnv allow .```
 4. ```DEBUG=0 make```
-5. ```./target/tg-tagbot```
+5. ```./target/pacani-bot```

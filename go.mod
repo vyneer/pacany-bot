@@ -1,4 +1,4 @@
-module github.com/vyneer/tg-tagbot
+module github.com/vyneer/pacani-bot
 
 go 1.21.0
 

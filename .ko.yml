@@ -3,7 +3,7 @@ defaultPlatforms:
   - linux/arm64
 
 builds:
-  - id: tg-tagbot
+  - id: pacani-bot
     main: ./main.go
     flags:
     - -tags

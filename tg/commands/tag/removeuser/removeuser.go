@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/vyneer/tg-tagbot/db"
-	"github.com/vyneer/tg-tagbot/tg/commands/implementation"
-	tag_errors "github.com/vyneer/tg-tagbot/tg/commands/tag/internal/errors"
-	"github.com/vyneer/tg-tagbot/tg/commands/tag/internal/util"
+	"github.com/vyneer/pacani-bot/db"
+	"github.com/vyneer/pacani-bot/tg/commands/implementation"
+	tag_errors "github.com/vyneer/pacani-bot/tg/commands/tag/internal/errors"
+	"github.com/vyneer/pacani-bot/tg/commands/tag/internal/util"
 )
 
 const (

@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/vyneer/tg-tagbot/tg/commands/implementation"
+	"github.com/vyneer/pacani-bot/tg/commands/implementation"
 )
 
 const (

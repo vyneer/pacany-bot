@@ -26,7 +26,7 @@ func New() (Config, error) {
 	if p, ok := os.LookupEnv("DB_PATH"); ok {
 		c.DBPath = p
 	} else {
-		c.DBPath = "tagbot.sqlite"
+		c.DBPath = "pacani-bot.sqlite"
 	}
 
 	if d, ok := os.LookupEnv("DEBUG"); ok {

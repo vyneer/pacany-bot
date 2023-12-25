@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/vyneer/tg-tagbot/db"
+	"github.com/vyneer/pacani-bot/db"
 )
 
 var (
