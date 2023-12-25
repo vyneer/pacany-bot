@@ -1,40 +1,30 @@
 .PHONY: FORCE
 
-TARGET_FOLDER = ./target
+DIST_FOLDER = ./dist
 BINARY = pacani-bot
 GOPATH = ${shell go env GOPATH}
 BIN_PATH = ${GOPATH}/bin
 GOLANGCI_LINT = ${BIN_PATH}/golangci-lint
 
-GOFLAGS := -tags netgo
-
-DEBUG ?= 1
-ifeq ($(DEBUG), 1)
-	LDFLAGS := '-extldflags="-static"'
-else
-	GOFLAGS += -trimpath
-	LDFLAGS := '-s -w -extldflags="-static"'
-endif
-
-GOFLAGS += -ldflags ${LDFLAGS}
+GOFLAGS := -tags netgo -ldflags -extldflags="-static"
 
 # Build
 
-build: ${TARGET_FOLDER}/${BINARY}
+build: ${DIST_FOLDER}/${BINARY}
 .PHONY: build
 
 run: build
-	${TARGET_FOLDER}/${BINARY}
+	${DIST_FOLDER}/${BINARY}
 .PHONY: run
 
 clean:
 	go clean
-	rm -rf ${TARGET_FOLDER}
+	rm -rf ${DIST_FOLDER}
 .PHONY: clean
 
-ko:
-	ko build --local --base-import-paths
-.PHONY: ko
+release: clean
+	goreleaser release
+.PHONY: release
 
 # Test
 
@@ -77,7 +67,7 @@ setup: download verify setup-linter setup-hooks
 
 # Non-PHONY targets
 
-${TARGET_FOLDER}/${BINARY}: FORCE
+${DIST_FOLDER}/${BINARY}: FORCE
 	CGO_ENABLED=0 go build ${GOFLAGS} -v -o $@
 
 ${GOLANGCI_LINT}:

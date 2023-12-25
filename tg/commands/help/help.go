@@ -7,6 +7,12 @@ import (
 	"github.com/vyneer/pacani-bot/tg/commands/implementation"
 )
 
+var (
+	Version   = "dev"
+	Commit    = "deadbeef"
+	Timestamp = "0"
+)
+
 const (
 	name              string = "help"
 	parentName        string = ""
@@ -44,7 +50,7 @@ func (c *Command) GetDescription() (string, int) {
 
 func (c *Command) Run(_ context.Context, _ implementation.CommandArgs) implementation.CommandResponse {
 	return implementation.CommandResponse{
-		Text:  "Multi-purpose Telegram bot, check other help commands for more details.\n\nCurrently supported functions:\n- tagging (/taghelp)",
+		Text:  fmt.Sprintf("Multi-purpose Telegram bot, check other help commands for more details.\n\nCurrently supported functions:\n- tagging (/taghelp)\n\nVersion: v%s-%s-%s", Version, Commit, Timestamp),
 		Reply: true,
 	}
 }

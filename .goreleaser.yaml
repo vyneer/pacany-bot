@@ -1,0 +1,61 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 1
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: pacani-bot
+    env:
+      - CGO_ENABLED=0
+    targets:
+      - linux_amd64_v1
+      - linux_arm64
+      - linux_arm_5
+      - linux_arm_6
+      - linux_386
+    tags:
+      - netgo
+    ldflags:
+      - -extldflags=-static
+      - -s -w
+      - -X github.com/vyneer/pacani-bot/tg/commands/help.Version={{ .Version }} 
+      - -X github.com/vyneer/pacani-bot/tg/commands/help.Commit={{ .ShortCommit }}
+      - -X github.com/vyneer/pacani-bot/tg/commands/help.Timestamp={{ .CommitTimestamp }}
+    flags:
+      - -trimpath
+
+kos:
+  - repository: ghcr.io/vyneer/pacani-bot
+    bare: true
+    tags:
+      - latest
+      - '{{ .Version }}'
+    labels:
+      org.opencontainers.image.created: '{{ .Date }}'
+      org.opencontainers.image.licenses: GPL-3.0
+      org.opencontainers.image.revision: '{{ .FullCommit }}'
+      org.opencontainers.image.source: https://github.com/vyneer/pacani-bot
+      org.opencontainers.image.title: pacani-bot
+      org.opencontainers.image.url: https://github.com/vyneer/pacani-bot
+      org.opencontainers.image.version: '{{ .Version }}'
+
+archives:
+  - format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}{{ .Arm }}{{ end }}
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
