@@ -1,7 +1,7 @@
 .PHONY: FORCE
 
 DIST_FOLDER = ./dist
-BINARY = pacani-bot
+BINARY = pacany-bot
 GOPATH = ${shell go env GOPATH}
 BIN_PATH = ${GOPATH}/bin
 GOLANGCI_LINT = ${BIN_PATH}/golangci-lint

@@ -4,11 +4,11 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/vyneer/pacani-bot/config"
-	"github.com/vyneer/pacani-bot/db"
-	"github.com/vyneer/pacani-bot/tg"
-	_ "github.com/vyneer/pacani-bot/tg/commands/help"
-	_ "github.com/vyneer/pacani-bot/tg/commands/tag"
+	"github.com/vyneer/pacany-bot/config"
+	"github.com/vyneer/pacany-bot/db"
+	"github.com/vyneer/pacany-bot/tg"
+	_ "github.com/vyneer/pacany-bot/tg/commands/help"
+	_ "github.com/vyneer/pacany-bot/tg/commands/tag"
 )
 
 func main() {

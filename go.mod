@@ -1,4 +1,4 @@
-module github.com/vyneer/pacani-bot
+module github.com/vyneer/pacany-bot
 
 go 1.21.0
 

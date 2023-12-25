@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/vyneer/pacani-bot/db"
+	"github.com/vyneer/pacany-bot/db"
 )
 
 var (

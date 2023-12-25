@@ -8,7 +8,7 @@ before:
     - go mod tidy
 
 builds:
-  - id: pacani-bot
+  - id: pacany-bot
     env:
       - CGO_ENABLED=0
     targets:
@@ -22,14 +22,14 @@ builds:
     ldflags:
       - -extldflags=-static
       - -s -w
-      - -X github.com/vyneer/pacani-bot/tg/commands/help.Version={{ .Version }} 
-      - -X github.com/vyneer/pacani-bot/tg/commands/help.Commit={{ .ShortCommit }}
-      - -X github.com/vyneer/pacani-bot/tg/commands/help.Timestamp={{ .CommitTimestamp }}
+      - -X github.com/vyneer/pacany-bot/tg/commands/help.Version={{ .Version }} 
+      - -X github.com/vyneer/pacany-bot/tg/commands/help.Commit={{ .ShortCommit }}
+      - -X github.com/vyneer/pacany-bot/tg/commands/help.Timestamp={{ .CommitTimestamp }}
     flags:
       - -trimpath
 
 kos:
-  - repository: ghcr.io/vyneer/pacani-bot
+  - repository: ghcr.io/vyneer/pacany-bot
     bare: true
     tags:
       - latest
@@ -38,9 +38,9 @@ kos:
       org.opencontainers.image.created: '{{ .Date }}'
       org.opencontainers.image.licenses: GPL-3.0
       org.opencontainers.image.revision: '{{ .FullCommit }}'
-      org.opencontainers.image.source: https://github.com/vyneer/pacani-bot
-      org.opencontainers.image.title: pacani-bot
-      org.opencontainers.image.url: https://github.com/vyneer/pacani-bot
+      org.opencontainers.image.source: https://github.com/vyneer/pacany-bot
+      org.opencontainers.image.title: pacany-bot
+      org.opencontainers.image.url: https://github.com/vyneer/pacany-bot
       org.opencontainers.image.version: '{{ .Version }}'
 
 archives:

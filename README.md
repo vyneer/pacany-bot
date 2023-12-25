@@ -1,4 +1,4 @@
-# pacani-bot
+# pacany-bot
 
 lidl multi-purpose bot for telegram group chats
 
@@ -8,4 +8,4 @@ lidl multi-purpose bot for telegram group chats
 2. ```vim .env```
 3. ```direnv allow .```
 4. ```make```
-5. ```./dist/pacani-bot```
+5. ```./dist/pacany-bot```

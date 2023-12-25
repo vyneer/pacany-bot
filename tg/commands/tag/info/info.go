@@ -7,10 +7,10 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/vyneer/pacani-bot/db"
-	"github.com/vyneer/pacani-bot/tg/commands/implementation"
-	tag_errors "github.com/vyneer/pacani-bot/tg/commands/tag/internal/errors"
-	"github.com/vyneer/pacani-bot/tg/commands/tag/internal/util"
+	"github.com/vyneer/pacany-bot/db"
+	"github.com/vyneer/pacany-bot/tg/commands/implementation"
+	tag_errors "github.com/vyneer/pacany-bot/tg/commands/tag/internal/errors"
+	"github.com/vyneer/pacany-bot/tg/commands/tag/internal/util"
 )
 
 const (

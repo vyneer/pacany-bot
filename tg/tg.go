@@ -13,9 +13,9 @@ import (
 	gocache_store "github.com/eko/gocache/store/go_cache/v4"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	gocache "github.com/patrickmn/go-cache"
-	"github.com/vyneer/pacani-bot/config"
-	"github.com/vyneer/pacani-bot/db"
-	"github.com/vyneer/pacani-bot/tg/commands/implementation"
+	"github.com/vyneer/pacany-bot/config"
+	"github.com/vyneer/pacany-bot/db"
+	"github.com/vyneer/pacany-bot/tg/commands/implementation"
 )
 
 type Bot struct {

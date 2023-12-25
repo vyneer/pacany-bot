@@ -1,7 +1,7 @@
 package help
 
 import (
-	"github.com/vyneer/pacani-bot/tg/commands/implementation"
+	"github.com/vyneer/pacany-bot/tg/commands/implementation"
 )
 
 func init() {
