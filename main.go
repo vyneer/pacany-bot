@@ -14,7 +14,7 @@ import (
 func main() {
 	lvl := &slog.LevelVar{}
 
-	h := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+	h := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 		AddSource: true,
 		Level:     lvl,
 	})
