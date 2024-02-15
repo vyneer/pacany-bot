@@ -1,24 +1,23 @@
-package removeuser
+package changedesc
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 
-	"github.com/vyneer/pacany-bot/db"
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
 	tag_errors "github.com/vyneer/pacany-bot/tg/commands/tag/internal/errors"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/internal/util"
 )
 
 const (
-	name              string = "removeuser"
+	name              string = "changedesc"
 	parentName        string = "tag"
-	help              string = "Remove specified users from an existing tag"
-	helpOrder         int    = 5
-	shape             string = "/tagremoveuser <tag_name> <username> ..."
-	descriptionOrder  int    = 7
+	help              string = "Change the description of a tag"
+	helpOrder         int    = 3
+	shape             string = "/tagchangedesc <tag_name> <tag_new_description>"
+	descriptionOrder  int    = 5
 	showInCommandList bool   = true
 )
 
@@ -63,35 +62,24 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 		resp.Text = tag_errors.ErrInvalidTag.Error()
 		return resp
 	}
-	mentions := util.FilterInvalidUsernames(a.Args[1:])
-	if len(mentions) == 0 {
-		resp.Text = tag_errors.ErrNoValidUsers.Error()
-		return resp
-	}
 
-	err := a.DB.RemoveMentionsFromTag(ctx, a.ChatID, name, mentions...)
-	if err != nil {
-		if errors.Is(err, db.ErrEmptyTag) {
-			err := a.DB.RemoveTag(ctx, a.ChatID, name)
-			if err != nil {
-				slog.Warn("unable to remove tag", "err", err)
-				resp.Text = err.Error()
-				return resp
-			}
-			resp.Text = fmt.Sprintf("Removed tag \"%s\"", name)
-			return resp
+	descriptionSplit := []string{}
+	for _, v := range a.Args[1:] {
+		if util.IsValidUserName(v) {
+			break
 		}
-		slog.Warn("unable to add mentions to tag", "err", err)
+		descriptionSplit = append(descriptionSplit, v)
+	}
+	description := strings.Join(descriptionSplit, " ")
+
+	err := a.DB.ChangeDescriptionOfTag(ctx, a.ChatID, name, description)
+	if err != nil {
+		slog.Warn("unable to change tag description", "err", err)
 		resp.Text = err.Error()
 		return resp
 	}
 
-	resp.Text = fmt.Sprintf("Removed user%s from tag \"%s\"", func() string {
-		if len(mentions) != 1 {
-			return "s"
-		}
-		return ""
-	}(), name)
+	resp.Text = fmt.Sprintf("Changed tags description to \"%s\"", description)
 
 	return resp
 }

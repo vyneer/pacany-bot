@@ -19,8 +19,9 @@ type CommandArgs struct {
 }
 
 type CommandResponse struct {
-	Text  string
-	Reply bool
+	Text       string
+	Reply      bool
+	Capitalize bool
 }
 
 type Command interface {

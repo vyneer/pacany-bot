@@ -122,7 +122,10 @@ func (b *Bot) Run() error {
 			}
 
 			response := tgbotapi.NewMessage(update.Message.Chat.ID, "")
-			response.Text = b.capitalize(commandResponse.Text)
+			response.Text = commandResponse.Text
+			if commandResponse.Capitalize {
+				response.Text = b.capitalize(response.Text)
+			}
 			if commandResponse.Reply {
 				response.ReplyToMessageID = update.Message.MessageID
 			}
@@ -144,8 +147,9 @@ func (b *Bot) command(ctx context.Context, chatID int64, command string, args st
 	cmd := implementation.GetInteractableCommand(command)
 	if cmd == nil {
 		return implementation.CommandResponse{
-			Text:  "",
-			Reply: false,
+			Text:       "",
+			Reply:      false,
+			Capitalize: true,
 		}
 	}
 

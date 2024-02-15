@@ -47,7 +47,8 @@ func (c *Command) GetDescription() (string, int) {
 
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {
 	resp := implementation.CommandResponse{
-		Reply: true,
+		Reply:      true,
+		Capitalize: true,
 	}
 
 	if len(a.Args) != 2 {

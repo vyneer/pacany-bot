@@ -69,7 +69,8 @@ func (c *Command) Run(_ context.Context, _ implementation.CommandArgs) implement
 	}
 
 	return implementation.CommandResponse{
-		Text:  strings.Join(helpSlice, "\n\n"),
-		Reply: true,
+		Text:       strings.Join(helpSlice, "\n\n"),
+		Reply:      true,
+		Capitalize: true,
 	}
 }

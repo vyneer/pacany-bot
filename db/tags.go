@@ -21,12 +21,13 @@ var (
 
 type Tag struct {
 	gorm.Model
-	ChatID   int64  `gorm:"index:idx_chatid_name,unique"`
-	Name     string `gorm:"index:idx_chatid_name,unique"`
-	Mentions string
+	ChatID      int64  `gorm:"index:idx_chatid_name,unique"`
+	Name        string `gorm:"index:idx_chatid_name,unique"`
+	Description string
+	Mentions    string
 }
 
-func (db *DB) NewTag(ctx context.Context, chatID int64, name string, mentions ...string) error {
+func (db *DB) NewTag(ctx context.Context, chatID int64, name, description string, mentions ...string) error {
 	t, err := db.getTag(chatID, name)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err
@@ -36,7 +37,7 @@ func (db *DB) NewTag(ctx context.Context, chatID int64, name string, mentions ..
 		return ErrTagAlreadyExists
 	}
 
-	_, err = db.createTag(ctx, chatID, name, mentions...)
+	_, err = db.createTag(ctx, chatID, name, description, mentions...)
 	if err != nil {
 		return err
 	}
@@ -151,6 +152,23 @@ func (db *DB) RenameTag(ctx context.Context, chatID int64, oldName, newName stri
 	return nil
 }
 
+func (db *DB) ChangeDescriptionOfTag(ctx context.Context, chatID int64, name, description string) error {
+	oldTag, err := db.getTag(chatID, name)
+	if err != nil {
+		return err
+	}
+
+	newTag := oldTag
+	newTag.Description = description
+
+	_, err = db.updateTag(ctx, oldTag, newTag)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (db *DB) getTags(ctx context.Context, chatID int64) ([]Tag, error) {
 	t, err := db.tagCache.Get(ctx, chatID)
 	if err == nil {
@@ -180,16 +198,17 @@ func (db *DB) getTag(chatID int64, name string) (Tag, error) {
 	return t, nil
 }
 
-func (db *DB) createTag(ctx context.Context, chatID int64, name string, mentions ...string) (Tag, error) {
+func (db *DB) createTag(ctx context.Context, chatID int64, name, description string, mentions ...string) (Tag, error) {
 	tags, err := db.getTags(ctx, chatID)
 	if err != nil {
 		return Tag{}, err
 	}
 
 	t := Tag{
-		ChatID:   chatID,
-		Name:     name,
-		Mentions: strings.Join(mentions, " "),
+		ChatID:      chatID,
+		Name:        name,
+		Description: description,
+		Mentions:    strings.Join(mentions, " "),
 	}
 
 	res := db.gormdb.Create(&t)

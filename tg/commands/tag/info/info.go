@@ -17,9 +17,9 @@ const (
 	name              string = "info"
 	parentName        string = "tag"
 	help              string = "Get tag list, or, if a tag is specified, its user count and user list"
-	helpOrder         int    = 5
+	helpOrder         int    = 6
 	shape             string = "/taginfo or /taginfo <tag_name>"
-	descriptionOrder  int    = 7
+	descriptionOrder  int    = 8
 	showInCommandList bool   = true
 )
 
@@ -50,7 +50,8 @@ func (c *Command) GetDescription() (string, int) {
 
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {
 	resp := implementation.CommandResponse{
-		Reply: true,
+		Reply:      true,
+		Capitalize: true,
 	}
 
 	if len(a.Args) > 1 {
@@ -101,6 +102,9 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 		var info []string
 		fields := strings.Fields(tags[i].Mentions)
 		info = append(info, fmt.Sprintf("Tag name: %s", tags[i].Name))
+		if tags[i].Description != "" {
+			info = append(info, fmt.Sprintf("Tag description: %s", tags[i].Description))
+		}
 		info = append(info, fmt.Sprintf("User count: %d", len(fields)))
 		info = append(info, "User list:")
 		for _, v := range fields {

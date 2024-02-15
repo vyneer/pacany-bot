@@ -14,9 +14,9 @@ const (
 	name              string = "adduser"
 	parentName        string = "tag"
 	help              string = "Add specified users to an existing tag"
-	helpOrder         int    = 3
+	helpOrder         int    = 4
 	shape             string = "/tagadduser <tag_name> <username> ..."
-	descriptionOrder  int    = 5
+	descriptionOrder  int    = 6
 	showInCommandList bool   = true
 )
 
@@ -47,7 +47,8 @@ func (c *Command) GetDescription() (string, int) {
 
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {
 	resp := implementation.CommandResponse{
-		Reply: true,
+		Reply:      true,
+		Capitalize: true,
 	}
 
 	if len(a.Args) < 2 {

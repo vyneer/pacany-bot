@@ -50,7 +50,8 @@ func (c *Command) GetDescription() (string, int) {
 
 func (c *Command) Run(_ context.Context, _ implementation.CommandArgs) implementation.CommandResponse {
 	return implementation.CommandResponse{
-		Text:  fmt.Sprintf("Multi-purpose Telegram bot, check other help commands for more details.\n\nCurrently supported functions:\n- tagging (/taghelp)\n\nVersion: v%s-%s-%s", Version, Commit, Timestamp),
-		Reply: true,
+		Text:       fmt.Sprintf("Multi-purpose Telegram bot, check other help commands for more details.\n\nCurrently supported functions:\n- tagging (/taghelp)\n\nVersion: v%s-%s-%s", Version, Commit, Timestamp),
+		Reply:      true,
+		Capitalize: true,
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
 	tag_errors "github.com/vyneer/pacany-bot/tg/commands/tag/internal/errors"
@@ -15,7 +16,7 @@ const (
 	parentName        string = "tag"
 	help              string = "Add a new tag"
 	helpOrder         int    = 0
-	shape             string = "/tagadd <tag_name> <username> ..."
+	shape             string = "/tagadd <tag_name> <description> <username> ..."
 	descriptionOrder  int    = 2
 	showInCommandList bool   = true
 )
@@ -47,7 +48,8 @@ func (c *Command) GetDescription() (string, int) {
 
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {
 	resp := implementation.CommandResponse{
-		Reply: true,
+		Reply:      true,
+		Capitalize: true,
 	}
 
 	if len(a.Args) < 2 {
@@ -60,13 +62,25 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 		resp.Text = tag_errors.ErrInvalidTag.Error()
 		return resp
 	}
-	mentions := util.FilterInvalidUsernames(a.Args[1:])
+
+	lastDesc := 1
+	descriptionSplit := []string{}
+	for i, v := range a.Args[1:] {
+		if util.IsValidUserName(v) {
+			lastDesc += i
+			break
+		}
+		descriptionSplit = append(descriptionSplit, v)
+	}
+	description := strings.Join(descriptionSplit, " ")
+
+	mentions := util.FilterInvalidUsernames(a.Args[lastDesc:])
 	if len(mentions) == 0 {
 		resp.Text = tag_errors.ErrNoValidUsers.Error()
 		return resp
 	}
 
-	err := a.DB.NewTag(ctx, a.ChatID, name, mentions...)
+	err := a.DB.NewTag(ctx, a.ChatID, name, description, mentions...)
 	if err != nil {
 		slog.Warn("unable to create new tag", "err", err)
 		resp.Text = err.Error()

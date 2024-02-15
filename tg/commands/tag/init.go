@@ -4,6 +4,7 @@ import (
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/add"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/adduser"
+	"github.com/vyneer/pacany-bot/tg/commands/tag/changedesc"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/help"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/info"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/remove"
@@ -17,6 +18,7 @@ func init() {
 	implementation.CreateInteractableCommand(add.New)
 	implementation.CreateInteractableCommand(remove.New)
 	implementation.CreateInteractableCommand(rename.New)
+	implementation.CreateInteractableCommand(changedesc.New)
 	implementation.CreateInteractableCommand(adduser.New)
 	implementation.CreateInteractableCommand(removeuser.New)
 	implementation.CreateInteractableCommand(info.New)
