@@ -14,7 +14,7 @@ import (
 const (
 	name              string = "changedesc"
 	parentName        string = "tag"
-	help              string = "Change the description of a tag"
+	help              string = "Change the description of a specified tag"
 	shape             string = "/tagchangedesc <tag_name> <tag_new_description>"
 	showInCommandList bool   = true
 	showInHelp        bool   = true

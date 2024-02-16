@@ -16,7 +16,7 @@ import (
 const (
 	name              string = "info"
 	parentName        string = "tag"
-	help              string = "Get tag list, or, if a tag is specified, its user count and user list"
+	help              string = "Get tag list, or, if a tag is specified, its description, user count and user list"
 	shape             string = "/taginfo or /taginfo <tag_name>"
 	showInCommandList bool   = true
 	showInHelp        bool   = true
