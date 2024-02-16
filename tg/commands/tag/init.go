@@ -8,6 +8,7 @@ import (
 	"github.com/vyneer/pacany-bot/tg/commands/tag/help"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/info"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/remove"
+	"github.com/vyneer/pacany-bot/tg/commands/tag/removedesc"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/removeuser"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/rename"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/scan"
@@ -18,6 +19,7 @@ func init() {
 	implementation.CreateInteractableCommand(add.New)
 	implementation.CreateInteractableCommand(remove.New)
 	implementation.CreateInteractableCommand(rename.New)
+	implementation.CreateInteractableCommand(removedesc.New)
 	implementation.CreateInteractableCommand(changedesc.New)
 	implementation.CreateInteractableCommand(adduser.New)
 	implementation.CreateInteractableCommand(removeuser.New)
