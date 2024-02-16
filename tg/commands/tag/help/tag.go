@@ -3,7 +3,6 @@ package help
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
@@ -13,10 +12,9 @@ const (
 	name              string = "help"
 	parentName        string = "tag"
 	help              string = "Print help for the tag commands"
-	helpOrder         int    = -1
 	shape             string = "/taghelp"
-	descriptionOrder  int    = 1
 	showInCommandList bool   = true
+	showInHelp        bool   = false
 )
 
 type Command struct{}
@@ -33,39 +31,24 @@ func (c *Command) GetParentName() string {
 	return parentName
 }
 
-func (c *Command) GetHelp() (string, int) {
-	return fmt.Sprintf("%s - %s", shape, help), helpOrder
+func (c *Command) GetHelp() (string, bool) {
+	return fmt.Sprintf("%s - %s", shape, help), showInHelp
 }
 
-func (c *Command) GetDescription() (string, int) {
-	if !showInCommandList {
-		return "", descriptionOrder
-	}
-	return fmt.Sprintf("%s - %s", help, shape), descriptionOrder
+func (c *Command) GetDescription() (string, bool) {
+	return fmt.Sprintf("%s - %s", help, shape), showInCommandList
 }
 
 func (c *Command) Run(_ context.Context, _ implementation.CommandArgs) implementation.CommandResponse {
-	helpMap := map[int]string{}
+	helpSlice := []string{}
 
-	for _, v := range implementation.Interactable {
+	for _, v := range implementation.InteractableOrder {
 		if v.GetParentName() != parentName {
 			continue
 		}
-		helpString, order := v.GetHelp()
-		if order != -1 {
-			helpMap[order] = helpString
+		if helpString, show := v.GetHelp(); show {
+			helpSlice = append(helpSlice, helpString)
 		}
-	}
-
-	keys := make([]int, 0, len(helpMap))
-	for k := range helpMap {
-		keys = append(keys, k)
-	}
-	slices.Sort(keys)
-
-	helpSlice := make([]string, 0, len(helpMap))
-	for _, i := range keys {
-		helpSlice = append(helpSlice, helpMap[i])
 	}
 
 	return implementation.CommandResponse{

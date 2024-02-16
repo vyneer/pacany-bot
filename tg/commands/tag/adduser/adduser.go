@@ -14,10 +14,9 @@ const (
 	name              string = "adduser"
 	parentName        string = "tag"
 	help              string = "Add specified users to an existing tag"
-	helpOrder         int    = 4
 	shape             string = "/tagadduser <tag_name> <username> ..."
-	descriptionOrder  int    = 6
 	showInCommandList bool   = true
+	showInHelp        bool   = true
 )
 
 type Command struct{}
@@ -34,15 +33,12 @@ func (c *Command) GetParentName() string {
 	return parentName
 }
 
-func (c *Command) GetHelp() (string, int) {
-	return fmt.Sprintf("%s - %s", shape, help), helpOrder
+func (c *Command) GetHelp() (string, bool) {
+	return fmt.Sprintf("%s - %s", shape, help), showInHelp
 }
 
-func (c *Command) GetDescription() (string, int) {
-	if !showInCommandList {
-		return "", descriptionOrder
-	}
-	return fmt.Sprintf("%s - %s", help, shape), descriptionOrder
+func (c *Command) GetDescription() (string, bool) {
+	return fmt.Sprintf("%s - %s", help, shape), showInCommandList
 }
 
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {

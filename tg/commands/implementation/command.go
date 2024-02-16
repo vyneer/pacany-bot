@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	Interactable = map[string]Command{}
-	Automatic    = map[string]Command{}
+	Interactable      = map[string]Command{}
+	InteractableOrder = []Command{}
+	Automatic         = map[string]Command{}
 )
 
 type CommandArgs struct {
@@ -28,14 +29,15 @@ type Command interface {
 	Run(context.Context, CommandArgs) CommandResponse
 	GetName() string
 	GetParentName() string
-	GetHelp() (string, int)
-	GetDescription() (string, int)
+	GetHelp() (string, bool)
+	GetDescription() (string, bool)
 }
 
 func CreateInteractableCommand(cmd func() Command) {
 	c := cmd()
 
 	Interactable[fmt.Sprintf("%s%s", c.GetParentName(), c.GetName())] = c
+	InteractableOrder = append(InteractableOrder, c)
 }
 
 func CreateAutomaticCommand(cmd func() Command) {

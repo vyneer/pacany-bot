@@ -15,10 +15,9 @@ const (
 	name              string = "changedesc"
 	parentName        string = "tag"
 	help              string = "Change the description of a tag"
-	helpOrder         int    = 3
 	shape             string = "/tagchangedesc <tag_name> <tag_new_description>"
-	descriptionOrder  int    = 5
 	showInCommandList bool   = true
+	showInHelp        bool   = true
 )
 
 type Command struct{}
@@ -35,15 +34,12 @@ func (c *Command) GetParentName() string {
 	return parentName
 }
 
-func (c *Command) GetHelp() (string, int) {
-	return fmt.Sprintf("%s - %s", shape, help), helpOrder
+func (c *Command) GetHelp() (string, bool) {
+	return fmt.Sprintf("%s - %s", shape, help), showInHelp
 }
 
-func (c *Command) GetDescription() (string, int) {
-	if !showInCommandList {
-		return "", descriptionOrder
-	}
-	return fmt.Sprintf("%s - %s", help, shape), descriptionOrder
+func (c *Command) GetDescription() (string, bool) {
+	return fmt.Sprintf("%s - %s", help, shape), showInCommandList
 }
 
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {

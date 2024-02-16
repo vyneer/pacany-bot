@@ -15,10 +15,9 @@ const (
 	name              string = "scan"
 	parentName        string = "tag"
 	help              string = ""
-	helpOrder         int    = -1
 	shape             string = ""
-	descriptionOrder  int    = -1
 	showInCommandList bool   = false
+	showInHelp        bool   = false
 )
 
 type Command struct{}
@@ -35,15 +34,12 @@ func (c *Command) GetParentName() string {
 	return parentName
 }
 
-func (c *Command) GetHelp() (string, int) {
-	return fmt.Sprintf("%s - %s", shape, help), helpOrder
+func (c *Command) GetHelp() (string, bool) {
+	return fmt.Sprintf("%s - %s", shape, help), showInHelp
 }
 
-func (c *Command) GetDescription() (string, int) {
-	if !showInCommandList {
-		return "", descriptionOrder
-	}
-	return fmt.Sprintf("%s - %s", help, shape), descriptionOrder
+func (c *Command) GetDescription() (string, bool) {
+	return fmt.Sprintf("%s - %s", help, shape), showInCommandList
 }
 
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {
