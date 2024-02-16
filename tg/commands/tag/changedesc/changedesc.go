@@ -15,7 +15,7 @@ const (
 	name              string = "changedesc"
 	parentName        string = "tag"
 	help              string = "Change the description of a specified tag"
-	shape             string = "/tagchangedesc <tag_name> <tag_new_description>"
+	arguments         string = "<tag_name> <tag_new_description>"
 	showInCommandList bool   = true
 	showInHelp        bool   = true
 )
@@ -35,11 +35,14 @@ func (c *Command) GetParentName() string {
 }
 
 func (c *Command) GetHelp() (string, bool) {
-	return fmt.Sprintf("%s - %s", shape, help), showInHelp
+	return fmt.Sprintf("/%s%s %s - %s", parentName, name, arguments, help), showInHelp
 }
 
 func (c *Command) GetDescription() (string, bool) {
-	return fmt.Sprintf("%s - %s", help, shape), showInCommandList
+	if arguments == "" {
+		return help, showInCommandList
+	}
+	return fmt.Sprintf("%s - %s", arguments, help), showInCommandList
 }
 
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {

@@ -14,7 +14,7 @@ const (
 	name              string = "remove"
 	parentName        string = "tag"
 	help              string = "Remove the specified tag"
-	shape             string = "/tagremove <tag_name>"
+	arguments         string = "<tag_name>"
 	showInCommandList bool   = true
 	showInHelp        bool   = true
 )
@@ -34,11 +34,14 @@ func (c *Command) GetParentName() string {
 }
 
 func (c *Command) GetHelp() (string, bool) {
-	return fmt.Sprintf("%s - %s", shape, help), showInHelp
+	return fmt.Sprintf("/%s%s %s - %s", parentName, name, arguments, help), showInHelp
 }
 
 func (c *Command) GetDescription() (string, bool) {
-	return fmt.Sprintf("%s - %s", help, shape), showInCommandList
+	if arguments == "" {
+		return help, showInCommandList
+	}
+	return fmt.Sprintf("%s - %s", arguments, help), showInCommandList
 }
 
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {

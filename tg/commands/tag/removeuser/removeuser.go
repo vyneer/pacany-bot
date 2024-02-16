@@ -16,7 +16,7 @@ const (
 	name              string = "removeuser"
 	parentName        string = "tag"
 	help              string = "Remove specified users from an existing tag"
-	shape             string = "/tagremoveuser <tag_name> <username> ..."
+	arguments         string = "<tag_name> <username>..."
 	showInCommandList bool   = true
 	showInHelp        bool   = true
 )
@@ -36,11 +36,14 @@ func (c *Command) GetParentName() string {
 }
 
 func (c *Command) GetHelp() (string, bool) {
-	return fmt.Sprintf("%s - %s", shape, help), showInHelp
+	return fmt.Sprintf("/%s%s %s - %s", parentName, name, arguments, help), showInHelp
 }
 
 func (c *Command) GetDescription() (string, bool) {
-	return fmt.Sprintf("%s - %s", help, shape), showInCommandList
+	if arguments == "" {
+		return help, showInCommandList
+	}
+	return fmt.Sprintf("%s - %s", arguments, help), showInCommandList
 }
 
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {
