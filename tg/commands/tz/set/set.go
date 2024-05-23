@@ -1,20 +1,21 @@
-package adduser
+package set
 
 import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
+	"time"
 
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
-	tag_errors "github.com/vyneer/pacany-bot/tg/commands/tag/internal/errors"
-	"github.com/vyneer/pacany-bot/tg/commands/tag/internal/util"
+	tz_errors "github.com/vyneer/pacany-bot/tg/commands/tz/internal/errors"
 )
 
 const (
-	name              string = "adduser"
-	parentName        string = "tag"
-	help              string = "Add specified users to an existing tag"
-	arguments         string = "<tag_name> <username>..."
+	name              string = "set"
+	parentName        string = "tz"
+	help              string = "Set your timezone"
+	arguments         string = "<timezone> [description]"
 	showInCommandList bool   = true
 	showInHelp        bool   = true
 )
@@ -53,35 +54,39 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 		Capitalize: true,
 	}
 
-	if len(a.Args) < 2 {
+	if len(a.Args) < 1 {
 		resp.Text, _ = c.GetHelp()
 		return resp
 	}
 
-	name := a.Args[0]
-	if !util.IsValidTagName(name) {
-		resp.Text = tag_errors.ErrInvalidTag.Error()
-		return resp
-	}
-	mentions := util.FilterInvalidUsernames(a.Args[1:])
-	if len(mentions) == 0 {
-		resp.Text = tag_errors.ErrNoValidUsers.Error()
+	timezone := a.Args[0]
+	tz, err := time.LoadLocation(timezone)
+	if err != nil {
+		resp.Text = tz_errors.ErrInvalidTimezone.Error()
 		return resp
 	}
 
-	err := a.DB.AddMentionsToTag(ctx, a.ChatID, name, mentions...)
+	descriptionSplit := []string{}
+	descriptionSplit = append(descriptionSplit, a.Args[1:]...)
+
+	description := tz.String()
+	if len(descriptionSplit) > 0 {
+		description = strings.Join(descriptionSplit, " ")
+	}
+
+	name := a.User.FirstName
+	if a.User.UserName != "" {
+		name = fmt.Sprintf("%s (%s)", name, a.User.UserName)
+	}
+
+	err = a.DB.NewTimezone(ctx, a.ChatID, a.User.ID, name, tz.String(), description)
 	if err != nil {
-		slog.Warn("unable to add mentions to tag", "err", err)
+		slog.Warn("unable to set timezone", "err", err)
 		resp.Text = err.Error()
 		return resp
 	}
 
-	resp.Text = fmt.Sprintf("Added user%s to tag \"%s\"", func() string {
-		if len(mentions) != 1 {
-			return "s"
-		}
-		return ""
-	}(), name)
+	resp.Text = fmt.Sprintf("Set your timezone to \"%s\"", tz.String())
 
 	return resp
 }

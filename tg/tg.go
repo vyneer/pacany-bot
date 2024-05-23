@@ -21,7 +21,7 @@ import (
 type Bot struct {
 	api        *tgbotapi.BotAPI
 	adminCache *cache.Cache[[]tgbotapi.ChatMember]
-	tagDB      *db.DB
+	db         *db.DB
 }
 
 func New(c *config.Config, tagDB *db.DB) (Bot, error) {
@@ -57,7 +57,7 @@ func New(c *config.Config, tagDB *db.DB) (Bot, error) {
 
 	return Bot{
 		api:        bot,
-		tagDB:      tagDB,
+		db:         tagDB,
 		adminCache: cacheManager,
 	}, nil
 }
@@ -88,8 +88,9 @@ func (b *Bot) Run() error {
 
 			if !update.Message.IsCommand() {
 				commandResponse = implementation.GetAutomaticCommand("tagscan").Run(ctx, implementation.CommandArgs{
-					DB:     b.tagDB,
+					DB:     b.db,
 					ChatID: chatID,
+					User:   update.SentFrom(),
 					Args: []string{
 						username,
 						text,
@@ -105,7 +106,7 @@ func (b *Bot) Run() error {
 				if slices.ContainsFunc[[]tgbotapi.ChatMember](admins, func(cm tgbotapi.ChatMember) bool {
 					return cm.User.ID == update.Message.From.ID
 				}) {
-					commandResponse = b.command(ctx, chatID, update.Message.Command(), update.Message.CommandArguments())
+					commandResponse = b.command(ctx, chatID, update.SentFrom(), update.Message.Command(), update.Message.CommandArguments())
 				}
 			}
 
@@ -129,7 +130,7 @@ func (b *Bot) Run() error {
 	return nil
 }
 
-func (b *Bot) command(ctx context.Context, chatID int64, command string, args string) implementation.CommandResponse {
+func (b *Bot) command(ctx context.Context, chatID int64, user *tgbotapi.User, command string, args string) implementation.CommandResponse {
 	argsSplit := strings.Fields(args)
 
 	cmd := implementation.GetInteractableCommand(command)
@@ -144,8 +145,9 @@ func (b *Bot) command(ctx context.Context, chatID int64, command string, args st
 	slog.Debug("running command", "chatID", chatID, "command", command)
 
 	return cmd.Run(ctx, implementation.CommandArgs{
-		DB:     b.tagDB,
+		DB:     b.db,
 		ChatID: chatID,
+		User:   user,
 		Args:   argsSplit,
 	})
 }

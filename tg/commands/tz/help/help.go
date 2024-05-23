@@ -10,8 +10,8 @@ import (
 
 const (
 	name              string = "help"
-	parentName        string = "tag"
-	help              string = "Print help for the tag commands"
+	parentName        string = "tz"
+	help              string = "Print help for the timezone commands"
 	arguments         string = ""
 	showInCommandList bool   = true
 	showInHelp        bool   = false

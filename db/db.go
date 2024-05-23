@@ -14,8 +14,9 @@ import (
 )
 
 type DB struct {
-	gormdb   *gorm.DB
-	tagCache *cache.Cache[[]Tag]
+	gormdb        *gorm.DB
+	tagCache      *cache.Cache[[]Tag]
+	timezoneCache *cache.Cache[[]Timezone]
 }
 
 func New(c *config.Config) (DB, error) {
@@ -26,7 +27,7 @@ func New(c *config.Config) (DB, error) {
 		return DB{}, err
 	}
 
-	err = db.AutoMigrate(&Tag{})
+	err = db.AutoMigrate(&Tag{}, Timezone{})
 	if err != nil {
 		return DB{}, err
 	}
@@ -35,8 +36,13 @@ func New(c *config.Config) (DB, error) {
 	tagGocacheStore := gocache_store.NewGoCache(tagGocacheClient)
 	tagCacheManager := cache.New[[]Tag](tagGocacheStore)
 
+	timezoneGocacheClient := gocache.New(10*time.Minute, 15*time.Minute)
+	timezoneGocacheStore := gocache_store.NewGoCache(timezoneGocacheClient)
+	timezoneCacheManager := cache.New[[]Timezone](timezoneGocacheStore)
+
 	return DB{
-		gormdb:   db,
-		tagCache: tagCacheManager,
+		gormdb:        db,
+		tagCache:      tagCacheManager,
+		timezoneCache: timezoneCacheManager,
 	}, nil
 }

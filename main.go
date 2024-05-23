@@ -9,6 +9,7 @@ import (
 	"github.com/vyneer/pacany-bot/tg"
 	_ "github.com/vyneer/pacany-bot/tg/commands/help"
 	_ "github.com/vyneer/pacany-bot/tg/commands/tag"
+	_ "github.com/vyneer/pacany-bot/tg/commands/tz"
 )
 
 func main() {

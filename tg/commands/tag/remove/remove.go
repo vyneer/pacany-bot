@@ -34,6 +34,9 @@ func (c *Command) GetParentName() string {
 }
 
 func (c *Command) GetHelp() (string, bool) {
+	if arguments == "" {
+		return fmt.Sprintf("/%s%s - %s", parentName, name, help), showInHelp
+	}
 	return fmt.Sprintf("/%s%s %s - %s", parentName, name, arguments, help), showInHelp
 }
 

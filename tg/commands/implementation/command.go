@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/vyneer/pacany-bot/db"
 )
 
@@ -16,6 +17,7 @@ var (
 type CommandArgs struct {
 	DB     *db.DB
 	ChatID int64
+	User   *tgbotapi.User
 	Args   []string
 }
 
