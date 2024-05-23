@@ -15,6 +15,7 @@ const (
 	arguments         string = ""
 	showInCommandList bool   = true
 	showInHelp        bool   = true
+	adminOnly         bool   = false
 )
 
 type Command struct{}
@@ -45,13 +46,17 @@ func (c *Command) GetDescription() (string, bool) {
 	return fmt.Sprintf("%s - %s", arguments, help), showInCommandList
 }
 
+func (c *Command) IsAdminOnly() bool {
+	return adminOnly
+}
+
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {
 	resp := implementation.CommandResponse{
 		Reply:      true,
 		Capitalize: true,
 	}
 
-	err := a.DB.RemoveTimezone(ctx, a.ChatID, a.User.ID)
+	err := a.DB.RemoveTimezone(ctx, a.ChatID, a.User.UserName)
 	if err != nil {
 		slog.Warn("unable to remove timezone", "err", err)
 		resp.Text = err.Error()

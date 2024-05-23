@@ -17,15 +17,15 @@ var (
 
 type Timezone struct {
 	gorm.Model
-	ChatID      int64 `gorm:"index:idx_chatid_userid,unique"`
-	UserID      int64 `gorm:"index:idx_chatid_userid,unique"`
+	ChatID      int64  `gorm:"index:idx_tz_chatid_username,unique"`
+	Username    string `gorm:"index:idx_tz_chatid_username,unique"`
 	Name        string
 	Timezone    string
 	Description string
 }
 
-func (db *DB) NewTimezone(ctx context.Context, chatID, userID int64, name, tz, description string) error {
-	_, err := db.createTimezone(ctx, chatID, userID, name, tz, description)
+func (db *DB) NewTimezone(ctx context.Context, chatID int64, username, name, tz, description string) error {
+	_, err := db.createTimezone(ctx, chatID, username, name, tz, description)
 	if err != nil {
 		return err
 	}
@@ -42,8 +42,8 @@ func (db *DB) GetTimezones(ctx context.Context, chatID int64) ([]Timezone, error
 	return t, nil
 }
 
-func (db *DB) RemoveTimezone(ctx context.Context, chatID, userID int64) error {
-	t, err := db.getTimezone(chatID, userID)
+func (db *DB) RemoveTimezone(ctx context.Context, chatID int64, username string) error {
+	t, err := db.getTimezone(chatID, username)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ErrTimezoneDoesntExist
@@ -76,10 +76,10 @@ func (db *DB) getTimezones(ctx context.Context, chatID int64) ([]Timezone, error
 	return t, nil
 }
 
-func (db *DB) getTimezone(chatID, userID int64) (Timezone, error) {
+func (db *DB) getTimezone(chatID int64, username string) (Timezone, error) {
 	var t Timezone
 
-	res := db.gormdb.Where(&Timezone{ChatID: chatID, UserID: userID}).First(&t)
+	res := db.gormdb.Where(&Timezone{ChatID: chatID, Username: username}).First(&t)
 	if res.Error != nil {
 		return t, res.Error
 	}
@@ -87,7 +87,7 @@ func (db *DB) getTimezone(chatID, userID int64) (Timezone, error) {
 	return t, nil
 }
 
-func (db *DB) createTimezone(ctx context.Context, chatID int64, userID int64, name, tz, description string) (Timezone, error) {
+func (db *DB) createTimezone(ctx context.Context, chatID int64, username, name, tz, description string) (Timezone, error) {
 	tzs, err := db.getTimezones(ctx, chatID)
 	if err != nil {
 		return Timezone{}, err
@@ -95,7 +95,7 @@ func (db *DB) createTimezone(ctx context.Context, chatID int64, userID int64, na
 
 	t := Timezone{
 		ChatID:      chatID,
-		UserID:      userID,
+		Username:    username,
 		Name:        name,
 		Timezone:    tz,
 		Description: description,
@@ -109,7 +109,7 @@ func (db *DB) createTimezone(ctx context.Context, chatID int64, userID int64, na
 	}
 
 	i := slices.IndexFunc[[]Timezone](tzs, func(innerT Timezone) bool {
-		return userID == innerT.UserID
+		return username == innerT.Username
 	})
 	if i == -1 {
 		if err := db.timezoneCache.Set(ctx, chatID, append(tzs, t)); err != nil {
@@ -138,7 +138,7 @@ func (db *DB) removeTimezone(ctx context.Context, chatID int64, t *Timezone) err
 	}
 
 	i := slices.IndexFunc[[]Timezone](tzs, func(innerT Timezone) bool {
-		return t.UserID == innerT.UserID
+		return t.Username == innerT.Username
 	})
 	if i == -1 {
 		return nil

@@ -20,6 +20,7 @@ const (
 	arguments         string = "<time>"
 	showInCommandList bool   = true
 	showInHelp        bool   = true
+	adminOnly         bool   = false
 )
 
 type Command struct{}
@@ -50,6 +51,10 @@ func (c *Command) GetDescription() (string, bool) {
 	return fmt.Sprintf("%s - %s", arguments, help), showInCommandList
 }
 
+func (c *Command) IsAdminOnly() bool {
+	return adminOnly
+}
+
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {
 	resp := implementation.CommandResponse{
 		Reply:      true,
@@ -69,7 +74,7 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 	}
 
 	i := slices.IndexFunc[[]db.Timezone](tzs, func(t db.Timezone) bool {
-		return t.UserID == a.User.ID
+		return t.Username == a.User.UserName
 	})
 	if i == -1 {
 		resp.Text = tz_errors.ErrTimezoneNotSet.Error()
@@ -100,9 +105,9 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 
 	var timezonesPretty []string
 	for _, v := range tzs {
-		if v.UserID != a.User.ID {
+		if v.Username != a.User.UserName {
 			tz, _ := time.LoadLocation(v.Timezone)
-			timezonesPretty = append(timezonesPretty, fmt.Sprintf("%s - %s - %s", v.Name, v.Description, t.In(tz).Format("2006-01-02 15:04:05 -07:00")))
+			timezonesPretty = append(timezonesPretty, fmt.Sprintf("%s (%s) - %s - %s", v.Name, v.Username, v.Description, t.In(tz).Format("2006-01-02 15:04:05 -07:00")))
 		}
 	}
 

@@ -12,6 +12,7 @@ import (
 	"github.com/eko/gocache/lib/v4/cache"
 	gocache_store "github.com/eko/gocache/store/go_cache/v4"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/google/shlex"
 	gocache "github.com/patrickmn/go-cache"
 	"github.com/vyneer/pacany-bot/config"
 	"github.com/vyneer/pacany-bot/db"
@@ -106,7 +107,9 @@ func (b *Bot) Run() error {
 				if slices.ContainsFunc[[]tgbotapi.ChatMember](admins, func(cm tgbotapi.ChatMember) bool {
 					return cm.User.ID == update.Message.From.ID
 				}) {
-					commandResponse = b.command(ctx, chatID, update.SentFrom(), update.Message.Command(), update.Message.CommandArguments())
+					commandResponse = b.command(ctx, true, chatID, update.SentFrom(), update.Message.Command(), update.Message.CommandArguments())
+				} else {
+					commandResponse = b.command(ctx, false, chatID, update.SentFrom(), update.Message.Command(), update.Message.CommandArguments())
 				}
 			}
 
@@ -130,8 +133,12 @@ func (b *Bot) Run() error {
 	return nil
 }
 
-func (b *Bot) command(ctx context.Context, chatID int64, user *tgbotapi.User, command string, args string) implementation.CommandResponse {
-	argsSplit := strings.Fields(args)
+func (b *Bot) command(ctx context.Context, admin bool, chatID int64, user *tgbotapi.User, command string, args string) implementation.CommandResponse {
+	argsSplit, err := shlex.Split(args)
+	if err != nil {
+		slog.Warn("unable to shlex args string", "err", err)
+		argsSplit = strings.Fields(args)
+	}
 
 	cmd := implementation.GetInteractableCommand(command)
 	if cmd == nil {
@@ -142,13 +149,22 @@ func (b *Bot) command(ctx context.Context, chatID int64, user *tgbotapi.User, co
 		}
 	}
 
+	if cmd.IsAdminOnly() && !admin {
+		return implementation.CommandResponse{
+			Text:       "",
+			Reply:      false,
+			Capitalize: true,
+		}
+	}
+
 	slog.Debug("running command", "chatID", chatID, "command", command)
 
 	return cmd.Run(ctx, implementation.CommandArgs{
-		DB:     b.db,
-		ChatID: chatID,
-		User:   user,
-		Args:   argsSplit,
+		DB:      b.db,
+		ChatID:  chatID,
+		User:    user,
+		IsAdmin: admin,
+		Args:    argsSplit,
 	})
 }
 

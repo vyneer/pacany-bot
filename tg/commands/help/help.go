@@ -20,6 +20,7 @@ const (
 	arguments         string = ""
 	showInCommandList bool   = true
 	showInHelp        bool   = false
+	adminOnly         bool   = false
 )
 
 type Command struct{}
@@ -48,6 +49,10 @@ func (c *Command) GetDescription() (string, bool) {
 		return help, showInCommandList
 	}
 	return fmt.Sprintf("%s - %s", arguments, help), showInCommandList
+}
+
+func (c *Command) IsAdminOnly() bool {
+	return adminOnly
 }
 
 func (c *Command) Run(_ context.Context, _ implementation.CommandArgs) implementation.CommandResponse {

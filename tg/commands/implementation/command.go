@@ -15,10 +15,11 @@ var (
 )
 
 type CommandArgs struct {
-	DB     *db.DB
-	ChatID int64
-	User   *tgbotapi.User
-	Args   []string
+	DB      *db.DB
+	ChatID  int64
+	User    *tgbotapi.User
+	IsAdmin bool
+	Args    []string
 }
 
 type CommandResponse struct {
@@ -33,6 +34,7 @@ type Command interface {
 	GetParentName() string
 	GetHelp() (string, bool)
 	GetDescription() (string, bool)
+	IsAdminOnly() bool
 }
 
 func CreateInteractableCommand(cmd func() Command) {

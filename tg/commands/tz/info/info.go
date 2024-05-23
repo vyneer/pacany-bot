@@ -17,6 +17,7 @@ const (
 	arguments         string = ""
 	showInCommandList bool   = true
 	showInHelp        bool   = true
+	adminOnly         bool   = false
 )
 
 type Command struct{}
@@ -47,6 +48,10 @@ func (c *Command) GetDescription() (string, bool) {
 	return fmt.Sprintf("%s - %s", arguments, help), showInCommandList
 }
 
+func (c *Command) IsAdminOnly() bool {
+	return adminOnly
+}
+
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {
 	resp := implementation.CommandResponse{
 		Reply:      true,
@@ -63,7 +68,7 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 	var timezonesPretty []string
 	for _, v := range tzs {
 		tz, _ := time.LoadLocation(v.Timezone)
-		timezonesPretty = append(timezonesPretty, fmt.Sprintf("%s - %s - %s", v.Name, v.Description, time.Now().In(tz).Format("2006-01-02 15:04:05 -07:00")))
+		timezonesPretty = append(timezonesPretty, fmt.Sprintf("%s (%s) - %s - %s", v.Name, v.Username, v.Description, time.Now().In(tz).Format("2006-01-02 15:04:05 -07:00")))
 	}
 
 	if len(timezonesPretty) == 0 {

@@ -18,6 +18,7 @@ const (
 	arguments         string = "<tag_name> <tag_new_description>"
 	showInCommandList bool   = true
 	showInHelp        bool   = true
+	adminOnly         bool   = true
 )
 
 type Command struct{}
@@ -46,6 +47,10 @@ func (c *Command) GetDescription() (string, bool) {
 		return help, showInCommandList
 	}
 	return fmt.Sprintf("%s - %s", arguments, help), showInCommandList
+}
+
+func (c *Command) IsAdminOnly() bool {
+	return adminOnly
 }
 
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {

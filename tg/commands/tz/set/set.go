@@ -15,9 +15,10 @@ const (
 	name              string = "set"
 	parentName        string = "tz"
 	help              string = "Set your timezone"
-	arguments         string = "<timezone> [description]"
+	arguments         string = "<name> <timezone> [description]"
 	showInCommandList bool   = true
 	showInHelp        bool   = true
+	adminOnly         bool   = false
 )
 
 type Command struct{}
@@ -48,18 +49,24 @@ func (c *Command) GetDescription() (string, bool) {
 	return fmt.Sprintf("%s - %s", arguments, help), showInCommandList
 }
 
+func (c *Command) IsAdminOnly() bool {
+	return adminOnly
+}
+
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {
 	resp := implementation.CommandResponse{
 		Reply:      true,
 		Capitalize: true,
 	}
 
-	if len(a.Args) < 1 {
+	if len(a.Args) < 2 {
 		resp.Text, _ = c.GetHelp()
 		return resp
 	}
 
-	timezone := a.Args[0]
+	name := a.Args[0]
+
+	timezone := a.Args[1]
 	tz, err := time.LoadLocation(timezone)
 	if err != nil {
 		resp.Text = tz_errors.ErrInvalidTimezone.Error()
@@ -67,19 +74,14 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 	}
 
 	descriptionSplit := []string{}
-	descriptionSplit = append(descriptionSplit, a.Args[1:]...)
+	descriptionSplit = append(descriptionSplit, a.Args[2:]...)
 
 	description := tz.String()
 	if len(descriptionSplit) > 0 {
 		description = strings.Join(descriptionSplit, " ")
 	}
 
-	name := a.User.FirstName
-	if a.User.UserName != "" {
-		name = fmt.Sprintf("%s (%s)", name, a.User.UserName)
-	}
-
-	err = a.DB.NewTimezone(ctx, a.ChatID, a.User.ID, name, tz.String(), description)
+	err = a.DB.NewTimezone(ctx, a.ChatID, a.User.UserName, name, tz.String(), description)
 	if err != nil {
 		slog.Warn("unable to set timezone", "err", err)
 		resp.Text = err.Error()

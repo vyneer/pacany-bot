@@ -1,20 +1,21 @@
-package removedesc
+package remove
 
 import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
-	tag_errors "github.com/vyneer/pacany-bot/tg/commands/tag/internal/errors"
-	"github.com/vyneer/pacany-bot/tg/commands/tag/internal/util"
+	tz_errors "github.com/vyneer/pacany-bot/tg/commands/tz/internal/errors"
+	"github.com/vyneer/pacany-bot/tg/commands/tz/internal/util"
 )
 
 const (
-	name              string = "removedesc"
-	parentName        string = "tag"
-	help              string = "Remove the description of a specified tag"
-	arguments         string = "<tag_name>"
+	name              string = "remove"
+	parentName        string = "tz"
+	help              string = "Remove specified user's timezone"
+	arguments         string = "<username>"
 	showInCommandList bool   = true
 	showInHelp        bool   = true
 	adminOnly         bool   = true
@@ -63,20 +64,21 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 		return resp
 	}
 
-	name := a.Args[0]
-	if !util.IsValidTagName(name) {
-		resp.Text = tag_errors.ErrInvalidTag.Error()
+	username := a.Args[0]
+	if !util.IsValidUserName(username) {
+		resp.Text = tz_errors.ErrInvalidUsername.Error()
 		return resp
 	}
+	username = strings.TrimPrefix(username, "@")
 
-	err := a.DB.ChangeDescriptionOfTag(ctx, a.ChatID, name, "")
+	err := a.DB.RemoveTimezone(ctx, a.ChatID, username)
 	if err != nil {
-		slog.Warn("unable to remove tag description", "err", err)
+		slog.Warn("unable to remove timezone", "err", err)
 		resp.Text = err.Error()
 		return resp
 	}
 
-	resp.Text = "Removed tags description"
+	resp.Text = fmt.Sprintf("Removed %s's timezone", username)
 
 	return resp
 }

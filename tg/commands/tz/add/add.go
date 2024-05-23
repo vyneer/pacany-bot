@@ -1,20 +1,22 @@
-package removedesc
+package add
 
 import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
+	"time"
 
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
-	tag_errors "github.com/vyneer/pacany-bot/tg/commands/tag/internal/errors"
-	"github.com/vyneer/pacany-bot/tg/commands/tag/internal/util"
+	tz_errors "github.com/vyneer/pacany-bot/tg/commands/tz/internal/errors"
+	"github.com/vyneer/pacany-bot/tg/commands/tz/internal/util"
 )
 
 const (
-	name              string = "removedesc"
-	parentName        string = "tag"
-	help              string = "Remove the description of a specified tag"
-	arguments         string = "<tag_name>"
+	name              string = "add"
+	parentName        string = "tz"
+	help              string = "Add specified user"
+	arguments         string = "<username> <name> <timezone> [description]"
 	showInCommandList bool   = true
 	showInHelp        bool   = true
 	adminOnly         bool   = true
@@ -58,25 +60,43 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 		Capitalize: true,
 	}
 
-	if len(a.Args) != 1 {
+	if len(a.Args) < 3 {
 		resp.Text, _ = c.GetHelp()
 		return resp
 	}
 
-	name := a.Args[0]
-	if !util.IsValidTagName(name) {
-		resp.Text = tag_errors.ErrInvalidTag.Error()
+	username := a.Args[0]
+	if !util.IsValidUserName(username) {
+		resp.Text = tz_errors.ErrInvalidUsername.Error()
+		return resp
+	}
+	username = strings.TrimPrefix(username, "@")
+
+	name := a.Args[1]
+
+	timezone := a.Args[2]
+	tz, err := time.LoadLocation(timezone)
+	if err != nil {
+		resp.Text = tz_errors.ErrInvalidTimezone.Error()
 		return resp
 	}
 
-	err := a.DB.ChangeDescriptionOfTag(ctx, a.ChatID, name, "")
+	descriptionSplit := []string{}
+	descriptionSplit = append(descriptionSplit, a.Args[3:]...)
+
+	description := tz.String()
+	if len(descriptionSplit) > 0 {
+		description = strings.Join(descriptionSplit, " ")
+	}
+
+	err = a.DB.NewTimezone(ctx, a.ChatID, username, name, tz.String(), description)
 	if err != nil {
-		slog.Warn("unable to remove tag description", "err", err)
+		slog.Warn("unable to set timezone", "err", err)
 		resp.Text = err.Error()
 		return resp
 	}
 
-	resp.Text = "Removed tags description"
+	resp.Text = fmt.Sprintf("Added user \"%s\" with timezone \"%s\"", username, tz.String())
 
 	return resp
 }

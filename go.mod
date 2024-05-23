@@ -9,6 +9,7 @@ require (
 	github.com/eko/gocache/store/go_cache/v4 v4.2.1
 	github.com/glebarez/sqlite v1.10.0
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
+	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/orandin/slog-gorm v1.0.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	gorm.io/gorm v1.25.5

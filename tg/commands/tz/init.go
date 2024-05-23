@@ -2,10 +2,12 @@ package tz
 
 import (
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
+	"github.com/vyneer/pacany-bot/tg/commands/tz/add"
 	"github.com/vyneer/pacany-bot/tg/commands/tz/clear"
 	"github.com/vyneer/pacany-bot/tg/commands/tz/convert"
 	"github.com/vyneer/pacany-bot/tg/commands/tz/help"
 	"github.com/vyneer/pacany-bot/tg/commands/tz/info"
+	"github.com/vyneer/pacany-bot/tg/commands/tz/remove"
 	"github.com/vyneer/pacany-bot/tg/commands/tz/set"
 )
 
@@ -15,4 +17,6 @@ func init() {
 	implementation.CreateInteractableCommand(clear.New)
 	implementation.CreateInteractableCommand(info.New)
 	implementation.CreateInteractableCommand(convert.New)
+	implementation.CreateInteractableCommand(add.New)
+	implementation.CreateInteractableCommand(remove.New)
 }
