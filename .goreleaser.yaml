@@ -7,6 +7,9 @@ before:
   hooks:
     - go mod tidy
 
+git:
+  tag_sort: -version:creatordate
+
 release:
   replace_existing_artifacts: true
 

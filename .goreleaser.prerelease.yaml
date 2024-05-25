@@ -7,6 +7,9 @@ before:
   hooks:
     - go mod tidy
 
+git:
+  tag_sort: -version:creatordate
+
 release:
   prerelease: true
   make_latest: false
