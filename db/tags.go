@@ -21,8 +21,8 @@ var (
 
 type Tag struct {
 	gorm.Model
-	ChatID      int64  `gorm:"index:idx_chatid_name,unique"`
-	Name        string `gorm:"index:idx_chatid_name,unique"`
+	ChatID      int64  `gorm:"index:idx_tags_chatid_name,unique"`
+	Name        string `gorm:"index:idx_tags_chatid_name,unique"`
 	Description string
 	Mentions    string
 }

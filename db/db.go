@@ -27,7 +27,7 @@ func New(c *config.Config) (DB, error) {
 		return DB{}, err
 	}
 
-	err = db.AutoMigrate(&Tag{}, Timezone{})
+	err = db.AutoMigrate(&Tag{}, &Timezone{})
 	if err != nil {
 		return DB{}, err
 	}

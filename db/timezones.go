@@ -17,8 +17,8 @@ var (
 
 type Timezone struct {
 	gorm.Model
-	ChatID      int64  `gorm:"index:idx_tz_chatid_username,unique"`
-	Username    string `gorm:"index:idx_tz_chatid_username,unique"`
+	ChatID      int64  `gorm:"index:idx_timezones_chatid_username,unique"`
+	Username    string `gorm:"index:idx_timezones_chatid_username,unique"`
 	Name        string
 	Timezone    string
 	Description string
