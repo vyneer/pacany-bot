@@ -7,6 +7,9 @@ before:
   hooks:
     - go mod tidy
 
+release:
+  replace_existing_artifacts: true
+
 builds:
   - id: pacany-bot
     env:

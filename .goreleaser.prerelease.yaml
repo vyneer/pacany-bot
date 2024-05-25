@@ -10,6 +10,7 @@ before:
 release:
   prerelease: true
   make_latest: false
+  replace_existing_artifacts: true
 
 builds:
   - id: pacany-bot
