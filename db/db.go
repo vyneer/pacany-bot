@@ -20,7 +20,7 @@ type DB struct {
 }
 
 func New(c *config.Config) (DB, error) {
-	db, err := gorm.Open(sqlite.Open(c.DBPath), &gorm.Config{
+	db, err := gorm.Open(sqlite.Open(c.DBPath+"?_journal_mode=WAL"), &gorm.Config{
 		Logger: slogGorm.New(),
 	})
 	if err != nil {
