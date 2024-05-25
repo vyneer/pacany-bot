@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/vyneer/pacany-bot/db"
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
 )
 
@@ -55,7 +56,7 @@ func (c *Command) IsAdminOnly() bool {
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []implementation.CommandResponse {
 	resp := implementation.CommandResponse{
 		Reply:      true,
-		Capitalize: true,
+		Capitalize: false,
 	}
 
 	tzs, err := a.DB.GetTimezones(ctx, a.ChatID)
@@ -67,10 +68,44 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 		}
 	}
 
-	var timezonesPretty []string
+	t := time.Now()
+	timezoneMap := map[int][]db.Timezone{}
 	for _, v := range tzs {
-		tz, _ := time.LoadLocation(v.Timezone)
-		timezonesPretty = append(timezonesPretty, fmt.Sprintf("%s (%s) - %s - %s", v.Name, v.Username, v.Description, time.Now().In(tz).Format("2006-01-02 15:04:05 -07:00")))
+		if v.Username != a.User.UserName {
+			tz, _ := time.LoadLocation(v.Timezone)
+			_, offset := t.In(tz).Zone()
+			timezoneMap[offset] = append(timezoneMap[offset], v)
+		}
+	}
+
+	var timezonesPretty []string
+	for k, timezoneSlice := range timezoneMap {
+		_, offset := t.Zone()
+		if k == offset {
+			continue
+		}
+
+		var names []string
+		var tz *time.Location
+		for i, v := range timezoneSlice {
+			if i == 0 {
+				tz, _ = time.LoadLocation(v.Timezone)
+			}
+
+			if v.Description != "" {
+				names = append(names, v.Description)
+			} else {
+				names = append(names, v.Username)
+			}
+		}
+
+		if len(names) == 0 {
+			continue
+		}
+
+		msg := strings.Join(names, ", ")
+
+		timezonesPretty = append(timezonesPretty, fmt.Sprintf("%s - %s", msg, t.In(tz).Format("02/01 15:04")))
 	}
 
 	if len(timezonesPretty) == 0 {

@@ -11,7 +11,7 @@ import (
 	"github.com/vyneer/pacany-bot/tg/commands/tz/set"
 )
 
-const name string = "name"
+const name string = "tz"
 
 func init() {
 	implementation.CreateParentCommand(implementation.ParentCommand{

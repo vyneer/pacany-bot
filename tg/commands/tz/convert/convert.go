@@ -58,7 +58,7 @@ func (c *Command) IsAdminOnly() bool {
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []implementation.CommandResponse {
 	resp := implementation.CommandResponse{
 		Reply:      true,
-		Capitalize: true,
+		Capitalize: false,
 	}
 
 	if len(a.Args) < 1 {
@@ -90,7 +90,8 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 	timeString := strings.Join(a.Args, " ")
 
 	var t time.Time
-	tz, _ := time.LoadLocation(tzs[i].Timezone)
+	tzString := tzs[i].Timezone
+	tz, _ := time.LoadLocation(tzString)
 	tFull, err1 := time.ParseInLocation("2006-01-02 15:04:05", timeString, tz)
 	tSeconds, err2 := time.Parse("15:04:05", timeString)
 	tMinutes, err3 := time.Parse("15:04", timeString)
@@ -111,12 +112,45 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 		}
 	}
 
-	var timezonesPretty []string
+	timezoneMap := map[int][]db.Timezone{}
 	for _, v := range tzs {
 		if v.Username != a.User.UserName {
 			tz, _ := time.LoadLocation(v.Timezone)
-			timezonesPretty = append(timezonesPretty, fmt.Sprintf("%s (%s) - %s - %s", v.Name, v.Username, v.Description, t.In(tz).Format("2006-01-02 15:04:05 -07:00")))
+			_, offset := t.In(tz).Zone()
+			timezoneMap[offset] = append(timezoneMap[offset], v)
 		}
+	}
+
+	var timezonesPretty []string
+	for k, timezoneSlice := range timezoneMap {
+		_, offset := t.Zone()
+		if k == offset {
+			continue
+		}
+
+		var names []string
+		var tz *time.Location
+		for i, v := range timezoneSlice {
+			if v.Timezone != tzString {
+				if i == 0 {
+					tz, _ = time.LoadLocation(v.Timezone)
+				}
+
+				if v.Description != "" {
+					names = append(names, v.Description)
+				} else {
+					names = append(names, v.Username)
+				}
+			}
+		}
+
+		if len(names) == 0 {
+			continue
+		}
+
+		msg := strings.Join(names, ", ")
+
+		timezonesPretty = append(timezonesPretty, fmt.Sprintf("%s - %s", msg, t.In(tz).Format("02/01 15:04")))
 	}
 
 	if len(timezonesPretty) == 0 {

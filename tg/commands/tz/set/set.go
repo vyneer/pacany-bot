@@ -15,7 +15,7 @@ const (
 	name              string = "set"
 	parentName        string = "tz"
 	help              string = "Set your timezone"
-	arguments         string = "<name> <timezone> [description]"
+	arguments         string = "<timezone> [description]"
 	showInCommandList bool   = true
 	showInHelp        bool   = true
 	adminOnly         bool   = false
@@ -59,16 +59,14 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 		Capitalize: true,
 	}
 
-	if len(a.Args) < 2 {
+	if len(a.Args) < 1 {
 		resp.Text, _ = c.GetHelp()
 		return []implementation.CommandResponse{
 			resp,
 		}
 	}
 
-	name := a.Args[0]
-
-	timezone := a.Args[1]
+	timezone := a.Args[0]
 	tz, err := time.LoadLocation(timezone)
 	if err != nil {
 		resp.Text = tz_errors.ErrInvalidTimezone.Error()
@@ -78,14 +76,14 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 	}
 
 	descriptionSplit := []string{}
-	descriptionSplit = append(descriptionSplit, a.Args[2:]...)
+	descriptionSplit = append(descriptionSplit, a.Args[1:]...)
 
-	description := tz.String()
+	description := a.User.UserName
 	if len(descriptionSplit) > 0 {
 		description = strings.Join(descriptionSplit, " ")
 	}
 
-	err = a.DB.NewTimezone(ctx, a.ChatID, a.User.UserName, name, tz.String(), description)
+	err = a.DB.NewTimezone(ctx, a.ChatID, a.User.UserName, tz.String(), description)
 	if err != nil {
 		slog.Warn("unable to set timezone", "err", err)
 		resp.Text = err.Error()

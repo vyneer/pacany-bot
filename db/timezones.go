@@ -19,13 +19,12 @@ type Timezone struct {
 	gorm.Model
 	ChatID      int64  `gorm:"index:idx_timezones_chatid_username,unique"`
 	Username    string `gorm:"index:idx_timezones_chatid_username,unique"`
-	Name        string
 	Timezone    string
 	Description string
 }
 
-func (db *DB) NewTimezone(ctx context.Context, chatID int64, username, name, tz, description string) error {
-	_, err := db.createTimezone(ctx, chatID, username, name, tz, description)
+func (db *DB) NewTimezone(ctx context.Context, chatID int64, username, tz, description string) error {
+	_, err := db.createTimezone(ctx, chatID, username, tz, description)
 	if err != nil {
 		return err
 	}
@@ -87,7 +86,7 @@ func (db *DB) getTimezone(chatID int64, username string) (Timezone, error) {
 	return t, nil
 }
 
-func (db *DB) createTimezone(ctx context.Context, chatID int64, username, name, tz, description string) (Timezone, error) {
+func (db *DB) createTimezone(ctx context.Context, chatID int64, username, tz, description string) (Timezone, error) {
 	tzs, err := db.getTimezones(ctx, chatID)
 	if err != nil {
 		return Timezone{}, err
@@ -96,13 +95,12 @@ func (db *DB) createTimezone(ctx context.Context, chatID int64, username, name, 
 	t := Timezone{
 		ChatID:      chatID,
 		Username:    username,
-		Name:        name,
 		Timezone:    tz,
 		Description: description,
 	}
 
 	res := db.gormdb.Clauses(clause.OnConflict{
-		DoUpdates: clause.AssignmentColumns([]string{"name", "timezone", "description"}),
+		DoUpdates: clause.AssignmentColumns([]string{"timezone", "description"}),
 	}).Create(&t)
 	if res.Error != nil {
 		return t, res.Error

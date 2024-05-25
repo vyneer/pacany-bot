@@ -16,7 +16,7 @@ const (
 	name              string = "add"
 	parentName        string = "tz"
 	help              string = "Add specified user"
-	arguments         string = "<username> <name> <timezone> [description]"
+	arguments         string = "<username> <timezone> [description]"
 	showInCommandList bool   = true
 	showInHelp        bool   = true
 	adminOnly         bool   = true
@@ -60,7 +60,7 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 		Capitalize: true,
 	}
 
-	if len(a.Args) < 3 {
+	if len(a.Args) < 2 {
 		resp.Text, _ = c.GetHelp()
 		return []implementation.CommandResponse{
 			resp,
@@ -76,9 +76,7 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 	}
 	username = strings.TrimPrefix(username, "@")
 
-	name := a.Args[1]
-
-	timezone := a.Args[2]
+	timezone := a.Args[1]
 	tz, err := time.LoadLocation(timezone)
 	if err != nil {
 		resp.Text = tz_errors.ErrInvalidTimezone.Error()
@@ -88,14 +86,14 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 	}
 
 	descriptionSplit := []string{}
-	descriptionSplit = append(descriptionSplit, a.Args[3:]...)
+	descriptionSplit = append(descriptionSplit, a.Args[2:]...)
 
-	description := tz.String()
+	description := username
 	if len(descriptionSplit) > 0 {
 		description = strings.Join(descriptionSplit, " ")
 	}
 
-	err = a.DB.NewTimezone(ctx, a.ChatID, username, name, tz.String(), description)
+	err = a.DB.NewTimezone(ctx, a.ChatID, username, tz.String(), description)
 	if err != nil {
 		slog.Warn("unable to set timezone", "err", err)
 		resp.Text = err.Error()
