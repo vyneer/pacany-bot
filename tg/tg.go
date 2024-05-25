@@ -85,10 +85,10 @@ func (b *Bot) Run() error {
 			text := update.Message.Text
 			username := update.Message.From.UserName
 
-			var commandResponse implementation.CommandResponse
+			var commandResponses []implementation.CommandResponse
 
 			if !update.Message.IsCommand() {
-				commandResponse = implementation.GetAutomaticCommand("tagscan").Run(ctx, implementation.CommandArgs{
+				commandResponses = implementation.GetAutomaticCommand("tagscan").Run(ctx, implementation.CommandArgs{
 					DB:     b.db,
 					ChatID: chatID,
 					User:   update.SentFrom(),
@@ -104,27 +104,29 @@ func (b *Bot) Run() error {
 					continue
 				}
 
-				if slices.ContainsFunc[[]tgbotapi.ChatMember](admins, func(cm tgbotapi.ChatMember) bool {
+				if slices.ContainsFunc(admins, func(cm tgbotapi.ChatMember) bool {
 					return cm.User.ID == update.Message.From.ID
 				}) {
-					commandResponse = b.command(ctx, true, chatID, update.SentFrom(), update.Message.Command(), update.Message.CommandArguments())
+					commandResponses = b.command(ctx, true, chatID, update.SentFrom(), update.Message.Command(), update.Message.CommandArguments())
 				} else {
-					commandResponse = b.command(ctx, false, chatID, update.SentFrom(), update.Message.Command(), update.Message.CommandArguments())
+					commandResponses = b.command(ctx, false, chatID, update.SentFrom(), update.Message.Command(), update.Message.CommandArguments())
 				}
 			}
 
-			response := tgbotapi.NewMessage(update.Message.Chat.ID, "")
-			response.Text = commandResponse.Text
-			if commandResponse.Capitalize {
-				response.Text = b.capitalize(response.Text)
-			}
-			if commandResponse.Reply {
-				response.ReplyToMessageID = update.Message.MessageID
-			}
+			for _, r := range commandResponses {
+				response := tgbotapi.NewMessage(update.Message.Chat.ID, "")
+				response.Text = r.Text
+				if r.Capitalize {
+					response.Text = b.capitalize(response.Text)
+				}
+				if r.Reply {
+					response.ReplyToMessageID = update.Message.MessageID
+				}
 
-			if len(response.Text) != 0 {
-				if _, err := b.api.Send(response); err != nil {
-					log.Panic(err)
+				if len(response.Text) != 0 {
+					if _, err := b.api.Send(response); err != nil {
+						log.Panic(err)
+					}
 				}
 			}
 		}
@@ -133,7 +135,7 @@ func (b *Bot) Run() error {
 	return nil
 }
 
-func (b *Bot) command(ctx context.Context, admin bool, chatID int64, user *tgbotapi.User, command string, args string) implementation.CommandResponse {
+func (b *Bot) command(ctx context.Context, admin bool, chatID int64, user *tgbotapi.User, command string, args string) []implementation.CommandResponse {
 	argsSplit, err := shlex.Split(args)
 	if err != nil {
 		slog.Warn("unable to shlex args string", "err", err)
@@ -142,19 +144,11 @@ func (b *Bot) command(ctx context.Context, admin bool, chatID int64, user *tgbot
 
 	cmd := implementation.GetInteractableCommand(command)
 	if cmd == nil {
-		return implementation.CommandResponse{
-			Text:       "",
-			Reply:      false,
-			Capitalize: true,
-		}
+		return []implementation.CommandResponse{}
 	}
 
 	if cmd.IsAdminOnly() && !admin {
-		return implementation.CommandResponse{
-			Text:       "",
-			Reply:      false,
-			Capitalize: true,
-		}
+		return []implementation.CommandResponse{}
 	}
 
 	slog.Debug("running command", "chatID", chatID, "command", command)

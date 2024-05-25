@@ -53,14 +53,16 @@ func (c *Command) IsAdminOnly() bool {
 	return adminOnly
 }
 
-func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {
+func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []implementation.CommandResponse {
 	tags, err := a.DB.GetTags(ctx, a.ChatID)
 	if err != nil {
 		slog.Warn("unable to get tags", "err", err)
-		return implementation.CommandResponse{
-			Text:       err.Error(),
-			Reply:      true,
-			Capitalize: true,
+		return []implementation.CommandResponse{
+			{
+				Text:       err.Error(),
+				Reply:      true,
+				Capitalize: true,
+			},
 		}
 	}
 
@@ -73,7 +75,7 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 	var allMentions []string
 	description := ""
 	for _, v := range tags {
-		if i := slices.Index[[]string](fields, v.Name); i != -1 {
+		if i := slices.Index(fields, v.Name); i != -1 {
 			if tagCount == 0 {
 				description = v.Description
 			}
@@ -85,30 +87,56 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 
 	if len(allMentions) > 0 {
 		if filtered, ok := util.FilterMentions(allMentions, username); ok {
-			msg := filtered
-			if tagCount == 1 {
-				msg = strings.Join([]string{description, filtered}, " ")
-			}
-			if len(fields) > 0 {
-				msg = strings.Join([]string{strings.Join(fields, " "), filtered}, " ")
+			msgs := []implementation.CommandResponse{
+				{
+					Text:       strings.Join(filtered, " "),
+					Reply:      false,
+					Capitalize: false,
+				},
 			}
 
-			return implementation.CommandResponse{
-				Text:       msg,
+			if tagCount == 1 {
+				msgs = splitMentionsIntoResponses(filtered, description)
+			}
+
+			if len(fields) > 0 {
+				msgs = splitMentionsIntoResponses(filtered, strings.Join(fields, " "))
+			}
+
+			return msgs
+		}
+
+		return []implementation.CommandResponse{
+			{
+				Text:       "You're the only person using this tag",
+				Reply:      true,
+				Capitalize: true,
+			},
+		}
+	}
+
+	return []implementation.CommandResponse{}
+}
+
+func splitMentionsIntoResponses(mentions []string, desc string) []implementation.CommandResponse {
+	var msgs []implementation.CommandResponse
+
+	for i := 0; i < len(mentions); i += 5 {
+		if i+5 > len(mentions) {
+			msgs = append(msgs, implementation.CommandResponse{
+				Text:       strings.Join([]string{desc, strings.Join(mentions[i:], " ")}, " "),
 				Reply:      false,
 				Capitalize: false,
-			}
+			})
+			continue
 		}
-		return implementation.CommandResponse{
-			Text:       "You're the only person using this tag",
-			Reply:      true,
-			Capitalize: true,
-		}
+
+		msgs = append(msgs, implementation.CommandResponse{
+			Text:       strings.Join([]string{desc, strings.Join(mentions[i:i+5], " ")}, " "),
+			Reply:      false,
+			Capitalize: false,
+		})
 	}
 
-	return implementation.CommandResponse{
-		Text:       "",
-		Reply:      false,
-		Capitalize: false,
-	}
+	return msgs
 }

@@ -50,7 +50,7 @@ func (c *Command) IsAdminOnly() bool {
 	return adminOnly
 }
 
-func (c *Command) Run(_ context.Context, a implementation.CommandArgs) implementation.CommandResponse {
+func (c *Command) Run(_ context.Context, a implementation.CommandArgs) []implementation.CommandResponse {
 	helpSlice := []string{}
 
 	for _, v := range implementation.GetInteractableOrder() {
@@ -65,9 +65,11 @@ func (c *Command) Run(_ context.Context, a implementation.CommandArgs) implement
 		}
 	}
 
-	return implementation.CommandResponse{
-		Text:       strings.Join(helpSlice, "\n\n"),
-		Reply:      true,
-		Capitalize: true,
+	return []implementation.CommandResponse{
+		{
+			Text:       strings.Join(helpSlice, "\n\n"),
+			Reply:      true,
+			Capitalize: true,
+		},
 	}
 }

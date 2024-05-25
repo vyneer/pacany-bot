@@ -53,7 +53,7 @@ func (c *Command) IsAdminOnly() bool {
 	return adminOnly
 }
 
-func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {
+func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []implementation.CommandResponse {
 	resp := implementation.CommandResponse{
 		Reply:      true,
 		Capitalize: true,
@@ -61,13 +61,17 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 
 	if len(a.Args) != 1 {
 		resp.Text, _ = c.GetHelp()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	username := a.Args[0]
 	if !util.IsValidUserName(username) {
 		resp.Text = tz_errors.ErrInvalidUsername.Error()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 	username = strings.TrimPrefix(username, "@")
 
@@ -75,10 +79,14 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 	if err != nil {
 		slog.Warn("unable to remove timezone", "err", err)
 		resp.Text = err.Error()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	resp.Text = fmt.Sprintf("Removed %s's timezone", username)
 
-	return resp
+	return []implementation.CommandResponse{
+		resp,
+	}
 }

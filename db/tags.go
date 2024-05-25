@@ -80,7 +80,7 @@ func (db *DB) AddMentionsToTag(ctx context.Context, chatID int64, name string, m
 	oldMentionsLower := strings.Fields(strings.ToLower(oldTag.Mentions))
 	l := len(oldMentions)
 	for _, v := range mentions {
-		if !slices.Contains[[]string](oldMentionsLower, strings.ToLower(v)) {
+		if !slices.Contains(oldMentionsLower, strings.ToLower(v)) {
 			oldMentions = append(oldMentions, v)
 		}
 	}
@@ -111,7 +111,7 @@ func (db *DB) RemoveMentionsFromTag(ctx context.Context, chatID int64, name stri
 	var newMentions []string
 	oldMentions := strings.Fields(oldTag.Mentions)
 	for _, v := range oldMentions {
-		if i := slices.Index[[]string](mentionsLower, strings.ToLower(v)); i == -1 {
+		if i := slices.Index(mentionsLower, strings.ToLower(v)); i == -1 {
 			newMentions = append(newMentions, v)
 		}
 	}
@@ -234,7 +234,7 @@ func (db *DB) removeTag(ctx context.Context, chatID int64, t *Tag) error {
 		return res.Error
 	}
 
-	i := slices.IndexFunc[[]Tag](tags, func(innerT Tag) bool {
+	i := slices.IndexFunc(tags, func(innerT Tag) bool {
 		return t.Name == innerT.Name
 	})
 	if i == -1 {
@@ -264,7 +264,7 @@ func (db *DB) updateTag(ctx context.Context, oldTag, newTag Tag) (Tag, error) {
 		return newTag, res.Error
 	}
 
-	i := slices.IndexFunc[[]Tag](tags, func(innerT Tag) bool {
+	i := slices.IndexFunc(tags, func(innerT Tag) bool {
 		return oldTag.Name == innerT.Name
 	})
 	if i == -1 {

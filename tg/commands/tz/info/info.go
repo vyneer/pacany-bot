@@ -52,7 +52,7 @@ func (c *Command) IsAdminOnly() bool {
 	return adminOnly
 }
 
-func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {
+func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []implementation.CommandResponse {
 	resp := implementation.CommandResponse{
 		Reply:      true,
 		Capitalize: true,
@@ -62,7 +62,9 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 	if err != nil {
 		slog.Warn("unable to get timezones", "err", err)
 		resp.Text = err.Error()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	var timezonesPretty []string
@@ -73,10 +75,14 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 
 	if len(timezonesPretty) == 0 {
 		resp.Text = "No timezones in this group chat"
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	resp.Text = strings.Join(timezonesPretty, "\n")
 
-	return resp
+	return []implementation.CommandResponse{
+		resp,
+	}
 }

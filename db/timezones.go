@@ -108,7 +108,7 @@ func (db *DB) createTimezone(ctx context.Context, chatID int64, username, name, 
 		return t, res.Error
 	}
 
-	i := slices.IndexFunc[[]Timezone](tzs, func(innerT Timezone) bool {
+	i := slices.IndexFunc(tzs, func(innerT Timezone) bool {
 		return username == innerT.Username
 	})
 	if i == -1 {
@@ -137,7 +137,7 @@ func (db *DB) removeTimezone(ctx context.Context, chatID int64, t *Timezone) err
 		return res.Error
 	}
 
-	i := slices.IndexFunc[[]Timezone](tzs, func(innerT Timezone) bool {
+	i := slices.IndexFunc(tzs, func(innerT Timezone) bool {
 		return t.Username == innerT.Username
 	})
 	if i == -1 {

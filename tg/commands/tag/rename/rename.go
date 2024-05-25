@@ -52,7 +52,7 @@ func (c *Command) IsAdminOnly() bool {
 	return adminOnly
 }
 
-func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {
+func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []implementation.CommandResponse {
 	resp := implementation.CommandResponse{
 		Reply:      true,
 		Capitalize: true,
@@ -60,34 +60,46 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 
 	if len(a.Args) != 2 {
 		resp.Text, _ = c.GetHelp()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	oldName := a.Args[0]
 	if !util.IsValidTagName(oldName) {
 		resp.Text = tag_errors.ErrInvalidTag.Error()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	newName := a.Args[1]
 	if !util.IsValidTagName(newName) {
 		resp.Text = tag_errors.ErrInvalidTag.Error()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	if oldName == newName {
 		resp.Text = "Identical name provided"
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	err := a.DB.RenameTag(ctx, a.ChatID, oldName, newName)
 	if err != nil {
 		slog.Warn("unable to rename tag", "err", err)
 		resp.Text = err.Error()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	resp.Text = fmt.Sprintf("Renamed tag \"%s\" to \"%s\"", oldName, newName)
 
-	return resp
+	return []implementation.CommandResponse{
+		resp,
+	}
 }

@@ -55,7 +55,7 @@ func (c *Command) IsAdminOnly() bool {
 	return adminOnly
 }
 
-func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {
+func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []implementation.CommandResponse {
 	resp := implementation.CommandResponse{
 		Reply:      true,
 		Capitalize: true,
@@ -63,22 +63,28 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 
 	if len(a.Args) < 1 {
 		resp.Text, _ = c.GetHelp()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	tzs, err := a.DB.GetTimezones(ctx, a.ChatID)
 	if err != nil {
 		slog.Warn("unable to get timezones", "err", err)
 		resp.Text = err.Error()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
-	i := slices.IndexFunc[[]db.Timezone](tzs, func(t db.Timezone) bool {
+	i := slices.IndexFunc(tzs, func(t db.Timezone) bool {
 		return t.Username == a.User.UserName
 	})
 	if i == -1 {
 		resp.Text = tz_errors.ErrTimezoneNotSet.Error()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	timeString := strings.Join(a.Args, " ")
@@ -100,7 +106,9 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 		t = time.Date(t.Year(), t.Month(), t.Day(), tMinutes.Hour(), tMinutes.Minute(), 0, 0, tz)
 	default:
 		resp.Text = tz_errors.ErrUnableToParse.Error()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	var timezonesPretty []string
@@ -113,10 +121,14 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 
 	if len(timezonesPretty) == 0 {
 		resp.Text = "No other timezones in this group chat"
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	resp.Text = strings.Join(timezonesPretty, "\n")
 
-	return resp
+	return []implementation.CommandResponse{
+		resp,
+	}
 }

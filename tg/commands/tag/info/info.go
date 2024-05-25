@@ -55,7 +55,7 @@ func (c *Command) IsAdminOnly() bool {
 	return adminOnly
 }
 
-func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {
+func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []implementation.CommandResponse {
 	resp := implementation.CommandResponse{
 		Reply:      true,
 		Capitalize: true,
@@ -63,14 +63,18 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 
 	if len(a.Args) > 1 {
 		resp.Text, _ = c.GetHelp()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	tags, err := a.DB.GetTags(ctx, a.ChatID)
 	if err != nil {
 		slog.Warn("unable to get tags", "err", err)
 		resp.Text = err.Error()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	if len(a.Args) == 0 {
@@ -87,7 +91,9 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 
 		if len(tagNames) == 0 {
 			resp.Text = "No tags in this group chat"
-			return resp
+			return []implementation.CommandResponse{
+				resp,
+			}
 		}
 
 		resp.Text = strings.Join(tagNames, "\n")
@@ -95,15 +101,19 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 		name := a.Args[0]
 		if !util.IsValidTagName(name) {
 			resp.Text = tag_errors.ErrInvalidTag.Error()
-			return resp
+			return []implementation.CommandResponse{
+				resp,
+			}
 		}
 
-		i := slices.IndexFunc[[]db.Tag](tags, func(t db.Tag) bool {
+		i := slices.IndexFunc(tags, func(t db.Tag) bool {
 			return t.Name == name
 		})
 		if i == -1 {
 			resp.Text = db.ErrTagDoesntExist.Error()
-			return resp
+			return []implementation.CommandResponse{
+				resp,
+			}
 		}
 
 		var info []string
@@ -121,5 +131,7 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 		resp.Text = strings.Join(info, "\n")
 	}
 
-	return resp
+	return []implementation.CommandResponse{
+		resp,
+	}
 }

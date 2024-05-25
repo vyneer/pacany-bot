@@ -53,7 +53,7 @@ func (c *Command) IsAdminOnly() bool {
 	return adminOnly
 }
 
-func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {
+func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []implementation.CommandResponse {
 	resp := implementation.CommandResponse{
 		Reply:      true,
 		Capitalize: true,
@@ -61,13 +61,17 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 
 	if len(a.Args) < 2 {
 		resp.Text, _ = c.GetHelp()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	name := a.Args[0]
 	if !util.IsValidTagName(name) {
 		resp.Text = tag_errors.ErrInvalidTag.Error()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	lastDesc := 1
@@ -84,17 +88,23 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 	mentions := util.FilterInvalidUsernames(a.Args[lastDesc:])
 	if len(mentions) == 0 {
 		resp.Text = tag_errors.ErrNoValidUsers.Error()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	err := a.DB.NewTag(ctx, a.ChatID, name, description, mentions...)
 	if err != nil {
 		slog.Warn("unable to create new tag", "err", err)
 		resp.Text = err.Error()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	resp.Text = fmt.Sprintf("Added tag \"%s\"", name)
 
-	return resp
+	return []implementation.CommandResponse{
+		resp,
+	}
 }

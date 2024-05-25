@@ -54,7 +54,7 @@ func (c *Command) IsAdminOnly() bool {
 	return adminOnly
 }
 
-func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) implementation.CommandResponse {
+func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []implementation.CommandResponse {
 	resp := implementation.CommandResponse{
 		Reply:      true,
 		Capitalize: true,
@@ -62,13 +62,17 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 
 	if len(a.Args) < 3 {
 		resp.Text, _ = c.GetHelp()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	username := a.Args[0]
 	if !util.IsValidUserName(username) {
 		resp.Text = tz_errors.ErrInvalidUsername.Error()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 	username = strings.TrimPrefix(username, "@")
 
@@ -78,7 +82,9 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 	tz, err := time.LoadLocation(timezone)
 	if err != nil {
 		resp.Text = tz_errors.ErrInvalidTimezone.Error()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	descriptionSplit := []string{}
@@ -93,10 +99,14 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) impleme
 	if err != nil {
 		slog.Warn("unable to set timezone", "err", err)
 		resp.Text = err.Error()
-		return resp
+		return []implementation.CommandResponse{
+			resp,
+		}
 	}
 
 	resp.Text = fmt.Sprintf("Added user \"%s\" with timezone \"%s\"", username, tz.String())
 
-	return resp
+	return []implementation.CommandResponse{
+		resp,
+	}
 }

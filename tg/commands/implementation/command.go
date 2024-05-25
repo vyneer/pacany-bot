@@ -39,7 +39,7 @@ type CommandResponse struct {
 }
 
 type Command interface {
-	Run(context.Context, CommandArgs) CommandResponse
+	Run(context.Context, CommandArgs) []CommandResponse
 	GetName() string
 	GetParentName() string
 	GetHelp() (string, bool)

@@ -25,7 +25,7 @@ func FilterInvalidUsernames(usernames []string) []string {
 	return validUsernames
 }
 
-func FilterMentions(mentions []string, ignore string) (string, bool) {
+func FilterMentions(mentions []string, ignore string) ([]string, bool) {
 	var filteredMentions []string
 	mentionsMap := map[string]struct{}{}
 
@@ -36,7 +36,7 @@ func FilterMentions(mentions []string, ignore string) (string, bool) {
 		}
 	}
 
-	return strings.Join(filteredMentions, " "), len(filteredMentions) > 0
+	return filteredMentions, len(filteredMentions) > 0
 }
 
 func IsValidTagName(name string) bool {

@@ -56,7 +56,7 @@ func (c *Command) IsAdminOnly() bool {
 	return adminOnly
 }
 
-func (c *Command) Run(_ context.Context, _ implementation.CommandArgs) implementation.CommandResponse {
+func (c *Command) Run(_ context.Context, _ implementation.CommandArgs) []implementation.CommandResponse {
 	text := []string{
 		"Multi-purpose Telegram bot, check other help commands for more details.",
 	}
@@ -76,9 +76,11 @@ func (c *Command) Run(_ context.Context, _ implementation.CommandArgs) implement
 
 	text = append(text, fmt.Sprintf("Version: v%s-%s-%s", Version, Commit, Timestamp))
 
-	return implementation.CommandResponse{
-		Text:       strings.Join(text, "\n\n"),
-		Reply:      true,
-		Capitalize: true,
+	return []implementation.CommandResponse{
+		{
+			Text:       strings.Join(text, "\n\n"),
+			Reply:      true,
+			Capitalize: true,
+		},
 	}
 }
