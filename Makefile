@@ -7,7 +7,7 @@ GOLANGCI_LINT = ${BIN_PATH}/golangci-lint
 
 GOFLAGS := -trimpath -tags netgo -ldflags -extldflags="-static"
 
-.PHONY: FORCE build run clean release test lint tidy fix download verify setup-linter setup-hooks setup
+.PHONY: FORCE build run clean release prerelease test lint tidy fix download verify setup-linter setup-hooks setup
 
 # Help
 
