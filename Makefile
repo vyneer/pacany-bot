@@ -39,7 +39,8 @@ release: clean ## Create a new tag and make a release on GitHub
 .ONESHELL:
 prerelease: clean ## Create a new tag and make a prerelease on GitHub
 	@read -p "Enter tag name: " tag_name
-	tag_name+="-rc-$(shell git rev-parse --short HEAD)"
+	@read -p "Enter prerelease iteration: " count
+	tag_name+="-rc.$$count"
 	@read -p "Selected tag name is $$tag_name, is this correct? [y/n]: " -n 1 -r confirm
 	echo
 	if [[ $$confirm =~ ^[Yy]$$ ]]; then \
