@@ -36,7 +36,7 @@ func New(c *config.Config, tagDB *db.DB) (Bot, error) {
 	slog.Debug("authorized on bot", "account", bot.Self.UserName)
 
 	botCmdSlice := []tgbotapi.BotCommand{}
-	for _, v := range implementation.InteractableOrder {
+	for _, v := range implementation.GetInteractableOrder() {
 		if desc, show := v.GetDescription(); show {
 			botCmdSlice = append(botCmdSlice, tgbotapi.BotCommand{
 				Command:     v.GetParentName() + v.GetName(),

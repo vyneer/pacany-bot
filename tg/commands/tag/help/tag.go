@@ -53,7 +53,7 @@ func (c *Command) IsAdminOnly() bool {
 func (c *Command) Run(_ context.Context, a implementation.CommandArgs) implementation.CommandResponse {
 	helpSlice := []string{}
 
-	for _, v := range implementation.InteractableOrder {
+	for _, v := range implementation.GetInteractableOrder() {
 		if !a.IsAdmin && v.IsAdminOnly() {
 			continue
 		}

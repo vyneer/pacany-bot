@@ -11,7 +11,19 @@ import (
 	"github.com/vyneer/pacany-bot/tg/commands/tz/set"
 )
 
+const name string = "name"
+
 func init() {
+	implementation.CreateParentCommand(implementation.ParentCommand{
+		Name:        name,
+		Description: "timezones",
+		Initialize:  initialize,
+	})
+}
+
+func initialize() {
+	implementation.EnableParentCommand(name)
+
 	implementation.CreateInteractableCommand(help.New)
 	implementation.CreateInteractableCommand(set.New)
 	implementation.CreateInteractableCommand(clear.New)

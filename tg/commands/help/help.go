@@ -3,6 +3,7 @@ package help
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
 )
@@ -56,8 +57,27 @@ func (c *Command) IsAdminOnly() bool {
 }
 
 func (c *Command) Run(_ context.Context, _ implementation.CommandArgs) implementation.CommandResponse {
+	text := []string{
+		"Multi-purpose Telegram bot, check other help commands for more details.",
+	}
+
+	parents := implementation.GetEnabledParentCommands()
+	if len(parents) > 0 {
+		subText := []string{
+			"Currently enabled functions:",
+		}
+		for _, parentCommand := range parents {
+			subText = append(subText, fmt.Sprintf("- %s (/%shelp)", parentCommand.Description, parentCommand.Name))
+		}
+		text = append(text, strings.Join(subText, "\n"))
+	} else {
+		text = append(text, "No functions are currently enabled.")
+	}
+
+	text = append(text, fmt.Sprintf("Version: v%s-%s-%s", Version, Commit, Timestamp))
+
 	return implementation.CommandResponse{
-		Text:       fmt.Sprintf("Multi-purpose Telegram bot, check other help commands for more details.\n\nCurrently supported functions:\n- tagging (/taghelp)\n- timezones (/tzhelp)\n\nVersion: v%s-%s-%s", Version, Commit, Timestamp),
+		Text:       strings.Join(text, "\n\n"),
 		Reply:      true,
 		Capitalize: true,
 	}

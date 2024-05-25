@@ -9,8 +9,6 @@ import (
 	slogGorm "github.com/orandin/slog-gorm"
 	gocache "github.com/patrickmn/go-cache"
 	"gorm.io/gorm"
-
-	"github.com/vyneer/pacany-bot/config"
 )
 
 type DB struct {
@@ -19,8 +17,8 @@ type DB struct {
 	timezoneCache *cache.Cache[[]Timezone]
 }
 
-func New(c *config.Config) (DB, error) {
-	db, err := gorm.Open(sqlite.Open(c.DBPath+"?_journal_mode=WAL"), &gorm.Config{
+func New(path string) (DB, error) {
+	db, err := gorm.Open(sqlite.Open(path+"?_journal_mode=WAL"), &gorm.Config{
 		Logger: slogGorm.New(),
 	})
 	if err != nil {

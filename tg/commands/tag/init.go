@@ -14,7 +14,19 @@ import (
 	"github.com/vyneer/pacany-bot/tg/commands/tag/scan"
 )
 
+const name string = "tag"
+
 func init() {
+	implementation.CreateParentCommand(implementation.ParentCommand{
+		Name:        name,
+		Description: "tagging",
+		Initialize:  initialize,
+	})
+}
+
+func initialize() {
+	implementation.EnableParentCommand(name)
+
 	implementation.CreateInteractableCommand(help.New)
 	implementation.CreateInteractableCommand(add.New)
 	implementation.CreateInteractableCommand(remove.New)

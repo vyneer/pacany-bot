@@ -9,10 +9,20 @@ import (
 )
 
 var (
-	Interactable      = map[string]Command{}
-	InteractableOrder = []Command{}
-	Automatic         = map[string]Command{}
+	parent        = map[string]ParentCommand{}
+	parentEnabled = map[string]ParentCommand{}
+
+	interactable      = map[string]Command{}
+	interactableOrder = []Command{}
+
+	automatic = map[string]Command{}
 )
+
+type ParentCommand struct {
+	Name        string
+	Description string
+	Initialize  func()
+}
 
 type CommandArgs struct {
 	DB      *db.DB
@@ -37,23 +47,50 @@ type Command interface {
 	IsAdminOnly() bool
 }
 
+func CreateParentCommand(cmd ParentCommand) {
+	parent[cmd.Name] = cmd
+}
+
+func EnableParentCommand(name string) {
+	if cmd, ok := GetParentCommand(name); ok {
+		parentEnabled[cmd.Name] = cmd
+	}
+}
+
 func CreateInteractableCommand(cmd func() Command) {
 	c := cmd()
 
-	Interactable[fmt.Sprintf("%s%s", c.GetParentName(), c.GetName())] = c
-	InteractableOrder = append(InteractableOrder, c)
+	interactable[fmt.Sprintf("%s%s", c.GetParentName(), c.GetName())] = c
+	interactableOrder = append(interactableOrder, c)
 }
 
 func CreateAutomaticCommand(cmd func() Command) {
 	c := cmd()
 
-	Automatic[fmt.Sprintf("%s%s", c.GetParentName(), c.GetName())] = c
+	automatic[fmt.Sprintf("%s%s", c.GetParentName(), c.GetName())] = c
+}
+
+func GetParentCommand(name string) (ParentCommand, bool) {
+	c, ok := parent[name]
+	return c, ok
+}
+
+func GetAllParentCommands() map[string]ParentCommand {
+	return parent
+}
+
+func GetEnabledParentCommands() map[string]ParentCommand {
+	return parentEnabled
 }
 
 func GetInteractableCommand(command string) Command {
-	return Interactable[command]
+	return interactable[command]
+}
+
+func GetInteractableOrder() []Command {
+	return interactableOrder
 }
 
 func GetAutomaticCommand(command string) Command {
-	return Automatic[command]
+	return automatic[command]
 }

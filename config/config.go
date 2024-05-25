@@ -2,8 +2,11 @@ package config
 
 import (
 	"errors"
+	"log/slog"
 	"os"
 	"strings"
+
+	"github.com/vyneer/pacany-bot/tg/commands/implementation"
 )
 
 var ErrNoToken = errors.New("no token provided")
@@ -21,6 +24,21 @@ func New() (Config, error) {
 		c.Token = t
 	} else {
 		return c, ErrNoToken
+	}
+
+	if com, ok := os.LookupEnv("COMMANDS"); ok {
+		split := strings.Split(com, ",")
+		for _, parentName := range split {
+			if parentCommand, ok := implementation.GetParentCommand(parentName); ok {
+				parentCommand.Initialize()
+				slog.Info("initialized command", "name", parentName)
+			}
+		}
+	} else {
+		for parentName, parentCommand := range implementation.GetAllParentCommands() {
+			parentCommand.Initialize()
+			slog.Info("initialized command", "name", parentName)
+		}
 	}
 
 	if p, ok := os.LookupEnv("DB_PATH"); ok {

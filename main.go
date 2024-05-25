@@ -32,7 +32,7 @@ func main() {
 		lvl.Set(slog.LevelDebug)
 	}
 
-	tagDB, err := db.New(&c)
+	tagDB, err := db.New(c.DBPath)
 	if err != nil {
 		slog.Error("db setup error", "err", err)
 		os.Exit(1)
