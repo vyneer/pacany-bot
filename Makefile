@@ -36,6 +36,18 @@ release: clean ## Create a new tag and make a release on GitHub
 		goreleaser release; \
 	fi
 
+.ONESHELL:
+prerelease: clean ## Create a new tag and make a prerelease on GitHub
+	@read -p "Enter tag name: " tag_name
+	tag_name+="-rc-$(shell git rev-parse --short HEAD)"
+	@read -p "Selected tag name is $$tag_name, is this correct? [y/n]: " -n 1 -r confirm
+	echo
+	if [[ $$confirm =~ ^[Yy]$$ ]]; then \
+		git tag -a $$tag_name -m "$$tag_name"; \
+		git push origin $$tag_name; \
+		goreleaser release -f .goreleaser.prerelease.yaml; \
+	fi
+
 # Test
 
 test: ## Run tests

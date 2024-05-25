@@ -7,6 +7,10 @@ before:
   hooks:
     - go mod tidy
 
+release:
+  prerelease: true
+  make_latest: false
+
 builds:
   - id: pacany-bot
     env:
@@ -33,7 +37,7 @@ kos:
     bare: true
     tags:
       - latest
-      - stable
+      - prerelease
       - '{{ .Version }}'
     labels:
       org.opencontainers.image.created: '{{ .Date }}'
