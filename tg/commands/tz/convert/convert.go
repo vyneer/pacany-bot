@@ -1,6 +1,7 @@
 package convert
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"log/slog"
@@ -121,26 +122,53 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 		}
 	}
 
+	if len(timezoneMap) == 0 {
+		resp.Text = "No timezones in this group chat"
+		return []implementation.CommandResponse{
+			resp,
+		}
+	}
+
+	sortedByTz := make([]int, 0, len(timezoneMap))
+	sortedByLength := make([]int, 0, len(timezoneMap))
+	for k := range timezoneMap {
+		sortedByTz = append(sortedByTz, k)
+		sortedByLength = append(sortedByLength, k)
+	}
+
+	slices.Sort(sortedByTz)
+	slices.SortFunc(sortedByLength, func(a int, b int) int {
+		return cmp.Compare(len(timezoneMap[b]), len(timezoneMap[a]))
+	})
+
+	biggestTz := -1
+	if len(sortedByLength) > 1 {
+		first := timezoneMap[sortedByLength[0]]
+		second := timezoneMap[sortedByLength[1]]
+		if len(first) > len(second) && len(first) > 3 {
+			biggestTz = sortedByLength[0]
+		}
+	}
+
 	var timezonesPretty []string
-	for k, timezoneSlice := range timezoneMap {
-		_, offset := t.Zone()
-		if k == offset {
+	for _, k := range sortedByTz {
+		timezoneSlice := timezoneMap[k]
+
+		var tz *time.Location
+		if k == biggestTz {
 			continue
 		}
 
 		var names []string
-		var tz *time.Location
 		for i, v := range timezoneSlice {
-			if v.Timezone != tzString {
-				if i == 0 {
-					tz, _ = time.LoadLocation(v.Timezone)
-				}
+			if i == 0 {
+				tz, _ = time.LoadLocation(v.Timezone)
+			}
 
-				if v.Description != "" {
-					names = append(names, v.Description)
-				} else {
-					names = append(names, v.Username)
-				}
+			if v.Description != "" {
+				names = append(names, v.Description)
+			} else {
+				names = append(names, v.Username)
 			}
 		}
 
@@ -151,6 +179,12 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 		msg := strings.Join(names, ", ")
 
 		timezonesPretty = append(timezonesPretty, fmt.Sprintf("%s - %s", msg, t.In(tz).Format("02/01 15:04")))
+	}
+
+	if biggestTz != -1 {
+		biggest := timezoneMap[biggestTz]
+		tz, _ := time.LoadLocation(biggest[0].Timezone)
+		timezonesPretty = append(timezonesPretty, []string{"", fmt.Sprintf("Остальные (%d чел.) - %s", len(biggest), t.In(tz).Format("02/01 15:04"))}...)
 	}
 
 	if len(timezonesPretty) == 0 {
