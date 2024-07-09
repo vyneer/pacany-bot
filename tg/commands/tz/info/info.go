@@ -73,11 +73,9 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 	t := time.Now()
 	timezoneMap := map[int][]db.Timezone{}
 	for _, v := range tzs {
-		if v.Username != a.User.UserName {
-			tz, _ := time.LoadLocation(v.Timezone)
-			_, offset := t.In(tz).Zone()
-			timezoneMap[offset] = append(timezoneMap[offset], v)
-		}
+		tz, _ := time.LoadLocation(v.Timezone)
+		_, offset := t.In(tz).Zone()
+		timezoneMap[offset] = append(timezoneMap[offset], v)
 	}
 
 	if len(timezoneMap) == 0 {
