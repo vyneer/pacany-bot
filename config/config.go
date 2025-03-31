@@ -12,13 +12,16 @@ import (
 var ErrNoToken = errors.New("no token provided")
 
 type Config struct {
-	Token  string
-	DBPath string
-	Debug  int
+	Token    string
+	DBPath   string
+	Debug    int
+	Geonames bool
 }
 
 func New() (Config, error) {
-	c := Config{}
+	c := Config{
+		Geonames: true,
+	}
 
 	if t, ok := os.LookupEnv("TELEGRAM_TOKEN"); ok {
 		c.Token = t
@@ -53,6 +56,12 @@ func New() (Config, error) {
 			c.Debug = 1
 		case "trace", "2":
 			c.Debug = 2
+		}
+	}
+
+	if gn, ok := os.LookupEnv("GEONAMES"); ok {
+		if strings.ToLower(gn) == "false" || strings.ToLower(gn) == "0" {
+			c.Geonames = false
 		}
 	}
 

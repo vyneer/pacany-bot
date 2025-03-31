@@ -6,6 +6,7 @@ import (
 
 	"github.com/vyneer/pacany-bot/config"
 	"github.com/vyneer/pacany-bot/db"
+	"github.com/vyneer/pacany-bot/geonames"
 	"github.com/vyneer/pacany-bot/tg"
 	_ "github.com/vyneer/pacany-bot/tg/commands/help"
 	_ "github.com/vyneer/pacany-bot/tg/commands/tag"
@@ -30,6 +31,13 @@ func main() {
 
 	if c.Debug > 0 {
 		lvl.Set(slog.LevelDebug)
+	}
+
+	if c.Geonames {
+		if err := geonames.New(); err != nil {
+			slog.Error("geonames error", "err", err)
+			os.Exit(1)
+		}
 	}
 
 	tagDB, err := db.New(c.DBPath)

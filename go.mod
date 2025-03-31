@@ -10,6 +10,7 @@ require (
 	github.com/glebarez/sqlite v1.10.0
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
+	github.com/mkrou/geonames v1.0.0
 	github.com/orandin/slog-gorm v1.0.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	gorm.io/gorm v1.25.5
@@ -26,6 +27,8 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/jszwec/csvutil v1.2.1 // indirect
+	github.com/krolaw/zipstream v0.0.0-20180621105154-0a2661891f94 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
