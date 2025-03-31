@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj
 
-version: 1
+version: 2
 
 before:
   hooks:
@@ -35,7 +35,8 @@ builds:
       - -trimpath
 
 kos:
-  - repository: ghcr.io/vyneer/pacany-bot
+  - repositories:
+      - ghcr.io/vyneer/pacany-bot
     bare: true
     tags:
       - latest
@@ -51,7 +52,7 @@ kos:
       org.opencontainers.image.version: '{{ .Version }}'
 
 archives:
-  - format: tar.gz
+  - formats: tar.gz
     name_template: >-
       {{ .ProjectName }}_
       {{- title .Os }}_
