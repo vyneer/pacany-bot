@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/vyneer/pacany-bot/geonames"
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
 	tz_errors "github.com/vyneer/pacany-bot/tg/commands/tz/internal/errors"
 	"github.com/vyneer/pacany-bot/tg/commands/tz/internal/util"
@@ -79,9 +80,12 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 	timezone := a.Args[1]
 	tz, err := time.LoadLocation(timezone)
 	if err != nil {
-		resp.Text = tz_errors.ErrInvalidTimezone.Error()
-		return []implementation.CommandResponse{
-			resp,
+		tz, err = geonames.CityToTimezone.Get(timezone)
+		if err != nil {
+			resp.Text = tz_errors.ErrInvalidTimezone.Error()
+			return []implementation.CommandResponse{
+				resp,
+			}
 		}
 	}
 
