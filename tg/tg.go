@@ -44,7 +44,6 @@ func New(c *config.Config, tagDB *db.DB) (Bot, error) {
 					Command:     v.GetParentName() + v.GetName(),
 					Description: desc,
 				})
-				continue
 			}
 
 			botCmdAdminSlice = append(botCmdAdminSlice, tgbotapi.BotCommand{
