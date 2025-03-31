@@ -39,15 +39,15 @@ func New(c *config.Config, tagDB *db.DB) (Bot, error) {
 	botCmdAdminSlice := []tgbotapi.BotCommand{}
 	for _, v := range implementation.GetInteractableOrder() {
 		if desc, show := v.GetDescription(); show {
-			if v.IsAdminOnly() {
-				botCmdAdminSlice = append(botCmdAdminSlice, tgbotapi.BotCommand{
+			if !v.IsAdminOnly() {
+				botCmdSlice = append(botCmdSlice, tgbotapi.BotCommand{
 					Command:     v.GetParentName() + v.GetName(),
 					Description: desc,
 				})
 				continue
 			}
 
-			botCmdSlice = append(botCmdSlice, tgbotapi.BotCommand{
+			botCmdAdminSlice = append(botCmdAdminSlice, tgbotapi.BotCommand{
 				Command:     v.GetParentName() + v.GetName(),
 				Description: desc,
 			})
