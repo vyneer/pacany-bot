@@ -36,8 +36,17 @@ func New(c *config.Config, tagDB *db.DB) (Bot, error) {
 	slog.Debug("authorized on bot", "account", bot.Self.UserName)
 
 	botCmdSlice := []tgbotapi.BotCommand{}
+	botCmdAdminSlice := []tgbotapi.BotCommand{}
 	for _, v := range implementation.GetInteractableOrder() {
 		if desc, show := v.GetDescription(); show {
+			if v.IsAdminOnly() {
+				botCmdAdminSlice = append(botCmdAdminSlice, tgbotapi.BotCommand{
+					Command:     v.GetParentName() + v.GetName(),
+					Description: desc,
+				})
+				continue
+			}
+
 			botCmdSlice = append(botCmdSlice, tgbotapi.BotCommand{
 				Command:     v.GetParentName() + v.GetName(),
 				Description: desc,
@@ -46,8 +55,15 @@ func New(c *config.Config, tagDB *db.DB) (Bot, error) {
 	}
 
 	if _, err := bot.Request(tgbotapi.NewSetMyCommandsWithScope(
-		tgbotapi.NewBotCommandScopeAllChatAdministrators(),
+		tgbotapi.NewBotCommandScopeAllGroupChats(),
 		botCmdSlice...,
+	)); err != nil {
+		return Bot{}, err
+	}
+
+	if _, err := bot.Request(tgbotapi.NewSetMyCommandsWithScope(
+		tgbotapi.NewBotCommandScopeAllChatAdministrators(),
+		botCmdAdminSlice...,
 	)); err != nil {
 		return Bot{}, err
 	}
