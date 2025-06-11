@@ -8,6 +8,7 @@ import (
 	"github.com/vyneer/pacany-bot/tg/commands/tag/changedesc"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/help"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/info"
+	"github.com/vyneer/pacany-bot/tg/commands/tag/internal/errors"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/internal/util"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/remove"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/removedesc"
@@ -45,6 +46,7 @@ func (t *tag) Initialize() {
 
 func (t *tag) Configure(cfg *config.Config) {
 	util.SetTagPrefix(cfg.AllowedTagPrefixSymbols)
+	errors.SetErrInvalidTag(cfg.AllowedTagPrefixSymbols)
 }
 
 func init() {
