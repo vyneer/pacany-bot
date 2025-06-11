@@ -67,7 +67,7 @@ func (c *Command) Run(_ context.Context, _ implementation.CommandArgs) []impleme
 			"Currently enabled functions:",
 		}
 		for _, parentCommand := range parents {
-			subText = append(subText, fmt.Sprintf("- %s (/%shelp)", parentCommand.Description, parentCommand.Name))
+			subText = append(subText, fmt.Sprintf("- %s (/%shelp)", parentCommand.Description(), parentCommand.Name()))
 		}
 		text = append(text, strings.Join(subText, "\n"))
 	} else {
