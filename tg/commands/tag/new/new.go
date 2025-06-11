@@ -1,4 +1,4 @@
-package name
+package new
 
 import (
 	"context"
