@@ -1,22 +1,20 @@
-package removeuser
+package name
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 
-	"github.com/vyneer/pacany-bot/db"
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
 	tag_errors "github.com/vyneer/pacany-bot/tg/commands/tag/internal/errors"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/internal/util"
 )
 
 const (
-	name              string = "removeuser"
+	name              string = "name"
 	parentName        string = "tag"
-	help              string = "Remove specified users from an existing tag"
-	arguments         string = "<tag_name> <username>..."
+	help              string = "Rename the specified tag"
+	arguments         string = "<tag_old_name> <tag_new_name>"
 	showInCommandList bool   = true
 	showInHelp        bool   = true
 	adminOnly         bool   = true
@@ -60,57 +58,46 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 		Capitalize: true,
 	}
 
-	if len(a.Args) < 2 {
+	if len(a.Args) != 2 {
 		resp.Text, _ = c.GetHelp()
 		return []implementation.CommandResponse{
 			resp,
 		}
 	}
 
-	name := a.Args[0]
-	if !util.IsValidTagName(name) {
+	oldName := a.Args[0]
+	if !util.IsValidTagName(oldName) {
 		resp.Text = tag_errors.ErrInvalidTag.Error()
 		return []implementation.CommandResponse{
 			resp,
 		}
 	}
-	mentions := util.FilterInvalidUsernames(a.Args[1:])
-	if len(mentions) == 0 {
-		resp.Text = tag_errors.ErrNoValidUsers.Error()
+
+	newName := a.Args[1]
+	if !util.IsValidTagName(newName) {
+		resp.Text = tag_errors.ErrInvalidTag.Error()
 		return []implementation.CommandResponse{
 			resp,
 		}
 	}
 
-	err := a.DB.RemoveMentionsFromTag(ctx, a.ChatID, name, mentions...)
-	if err != nil {
-		if errors.Is(err, db.ErrEmptyTag) {
-			err := a.DB.RemoveTag(ctx, a.ChatID, name)
-			if err != nil {
-				slog.Warn("unable to remove tag", "err", err)
-				resp.Text = err.Error()
-				return []implementation.CommandResponse{
-					resp,
-				}
-			}
-			resp.Text = fmt.Sprintf("Removed tag \"%s\"", name)
-			return []implementation.CommandResponse{
-				resp,
-			}
+	if oldName == newName {
+		resp.Text = "Identical name provided"
+		return []implementation.CommandResponse{
+			resp,
 		}
-		slog.Warn("unable to add mentions to tag", "err", err)
+	}
+
+	err := a.DB.RenameTag(ctx, a.ChatID, oldName, newName)
+	if err != nil {
+		slog.Warn("unable to rename tag", "err", err)
 		resp.Text = err.Error()
 		return []implementation.CommandResponse{
 			resp,
 		}
 	}
 
-	resp.Text = fmt.Sprintf("Removed user%s from tag \"%s\"", func() string {
-		if len(mentions) != 1 {
-			return "s"
-		}
-		return ""
-	}(), name)
+	resp.Text = fmt.Sprintf("Renamed tag \"%s\" to \"%s\"", oldName, newName)
 
 	return []implementation.CommandResponse{
 		resp,

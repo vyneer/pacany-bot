@@ -1,9 +1,10 @@
-package adduser
+package name
 
 import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
 	tag_errors "github.com/vyneer/pacany-bot/tg/commands/tag/internal/errors"
@@ -11,10 +12,10 @@ import (
 )
 
 const (
-	name              string = "adduser"
+	name              string = "new"
 	parentName        string = "tag"
-	help              string = "Add specified users to an existing tag"
-	arguments         string = "<tag_name> <username>..."
+	help              string = "Add a new tag"
+	arguments         string = "<tag_name> [description] <username>..."
 	showInCommandList bool   = true
 	showInHelp        bool   = true
 	adminOnly         bool   = true
@@ -72,7 +73,19 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 			resp,
 		}
 	}
-	mentions := util.FilterInvalidUsernames(a.Args[1:])
+
+	lastDesc := 1
+	descriptionSplit := []string{}
+	for i, v := range a.Args[1:] {
+		if util.IsValidUserName(v) {
+			lastDesc += i
+			break
+		}
+		descriptionSplit = append(descriptionSplit, v)
+	}
+	description := strings.Join(descriptionSplit, " ")
+
+	mentions := util.FilterInvalidUsernames(a.Args[lastDesc:])
 	if len(mentions) == 0 {
 		resp.Text = tag_errors.ErrNoValidUsers.Error()
 		return []implementation.CommandResponse{
@@ -80,21 +93,16 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 		}
 	}
 
-	err := a.DB.AddMentionsToTag(ctx, a.ChatID, name, mentions...)
+	err := a.DB.NewTag(ctx, a.ChatID, name, description, mentions...)
 	if err != nil {
-		slog.Warn("unable to add mentions to tag", "err", err)
+		slog.Warn("unable to create new tag", "err", err)
 		resp.Text = err.Error()
 		return []implementation.CommandResponse{
 			resp,
 		}
 	}
 
-	resp.Text = fmt.Sprintf("Added user%s to tag \"%s\"", func() string {
-		if len(mentions) != 1 {
-			return "s"
-		}
-		return ""
-	}(), name)
+	resp.Text = fmt.Sprintf("Added tag \"%s\"", name)
 
 	return []implementation.CommandResponse{
 		resp,

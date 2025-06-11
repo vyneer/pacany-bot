@@ -1,4 +1,4 @@
-package remove
+package descdel
 
 import (
 	"context"
@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	name              string = "remove"
+	name              string = "descdel"
 	parentName        string = "tag"
-	help              string = "Remove the specified tag"
+	help              string = "Delete the description of a specified tag"
 	arguments         string = "<tag_name>"
 	showInCommandList bool   = true
 	showInHelp        bool   = true
@@ -73,16 +73,16 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 		}
 	}
 
-	err := a.DB.RemoveTag(ctx, a.ChatID, name)
+	err := a.DB.ChangeDescriptionOfTag(ctx, a.ChatID, name, "")
 	if err != nil {
-		slog.Warn("unable to remove tag", "err", err)
+		slog.Warn("unable to remove tag description", "err", err)
 		resp.Text = err.Error()
 		return []implementation.CommandResponse{
 			resp,
 		}
 	}
 
-	resp.Text = fmt.Sprintf("Removed tag \"%s\"", name)
+	resp.Text = "Removed tags description"
 
 	return []implementation.CommandResponse{
 		resp,

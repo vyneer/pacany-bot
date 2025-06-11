@@ -1,4 +1,4 @@
-package changedesc
+package desc
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	name              string = "changedesc"
+	name              string = "desc"
 	parentName        string = "tag"
 	help              string = "Change the description of a specified tag"
 	arguments         string = "<tag_name> <tag_new_description>"

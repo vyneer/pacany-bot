@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
 
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
 	tag_errors "github.com/vyneer/pacany-bot/tg/commands/tag/internal/errors"
@@ -14,8 +13,8 @@ import (
 const (
 	name              string = "add"
 	parentName        string = "tag"
-	help              string = "Add a new tag"
-	arguments         string = "<tag_name> [description] <username>..."
+	help              string = "Add specified users to an existing tag"
+	arguments         string = "<tag_name> <username>..."
 	showInCommandList bool   = true
 	showInHelp        bool   = true
 	adminOnly         bool   = true
@@ -73,19 +72,7 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 			resp,
 		}
 	}
-
-	lastDesc := 1
-	descriptionSplit := []string{}
-	for i, v := range a.Args[1:] {
-		if util.IsValidUserName(v) {
-			lastDesc += i
-			break
-		}
-		descriptionSplit = append(descriptionSplit, v)
-	}
-	description := strings.Join(descriptionSplit, " ")
-
-	mentions := util.FilterInvalidUsernames(a.Args[lastDesc:])
+	mentions := util.FilterInvalidUsernames(a.Args[1:])
 	if len(mentions) == 0 {
 		resp.Text = tag_errors.ErrNoValidUsers.Error()
 		return []implementation.CommandResponse{
@@ -93,16 +80,21 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 		}
 	}
 
-	err := a.DB.NewTag(ctx, a.ChatID, name, description, mentions...)
+	err := a.DB.AddMentionsToTag(ctx, a.ChatID, name, mentions...)
 	if err != nil {
-		slog.Warn("unable to create new tag", "err", err)
+		slog.Warn("unable to add mentions to tag", "err", err)
 		resp.Text = err.Error()
 		return []implementation.CommandResponse{
 			resp,
 		}
 	}
 
-	resp.Text = fmt.Sprintf("Added tag \"%s\"", name)
+	resp.Text = fmt.Sprintf("Added user%s to tag \"%s\"", func() string {
+		if len(mentions) != 1 {
+			return "s"
+		}
+		return ""
+	}(), name)
 
 	return []implementation.CommandResponse{
 		resp,
