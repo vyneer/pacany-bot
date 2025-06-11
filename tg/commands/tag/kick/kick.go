@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	name              string = "Kick"
+	name              string = "kick"
 	parentName        string = "tag"
 	help              string = "Kick specified users from an existing tag"
 	arguments         string = "<tag_name> <username>..."
