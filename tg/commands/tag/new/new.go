@@ -1,22 +1,21 @@
-package removeuser
+package new
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 
-	"github.com/vyneer/pacany-bot/db"
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
 	tag_errors "github.com/vyneer/pacany-bot/tg/commands/tag/internal/errors"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/internal/util"
 )
 
 const (
-	name              string = "removeuser"
+	name              string = "new"
 	parentName        string = "tag"
-	help              string = "Remove specified users from an existing tag"
-	arguments         string = "<tag_name> <username>..."
+	help              string = "Add a new tag"
+	arguments         string = "<tag_name> [description] <username>..."
 	showInCommandList bool   = true
 	showInHelp        bool   = true
 	adminOnly         bool   = true
@@ -74,7 +73,19 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 			resp,
 		}
 	}
-	mentions := util.FilterInvalidUsernames(a.Args[1:])
+
+	lastDesc := 1
+	descriptionSplit := []string{}
+	for i, v := range a.Args[1:] {
+		if util.IsValidUserName(v) {
+			lastDesc += i
+			break
+		}
+		descriptionSplit = append(descriptionSplit, v)
+	}
+	description := strings.Join(descriptionSplit, " ")
+
+	mentions := util.FilterInvalidUsernames(a.Args[lastDesc:])
 	if len(mentions) == 0 {
 		resp.Text = tag_errors.ErrNoValidUsers.Error()
 		return []implementation.CommandResponse{
@@ -82,35 +93,16 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 		}
 	}
 
-	err := a.DB.RemoveMentionsFromTag(ctx, a.ChatID, name, mentions...)
+	err := a.DB.NewTag(ctx, a.ChatID, name, description, mentions...)
 	if err != nil {
-		if errors.Is(err, db.ErrEmptyTag) {
-			err := a.DB.RemoveTag(ctx, a.ChatID, name)
-			if err != nil {
-				slog.Warn("unable to remove tag", "err", err)
-				resp.Text = err.Error()
-				return []implementation.CommandResponse{
-					resp,
-				}
-			}
-			resp.Text = fmt.Sprintf("Removed tag \"%s\"", name)
-			return []implementation.CommandResponse{
-				resp,
-			}
-		}
-		slog.Warn("unable to add mentions to tag", "err", err)
+		slog.Warn("unable to create new tag", "err", err)
 		resp.Text = err.Error()
 		return []implementation.CommandResponse{
 			resp,
 		}
 	}
 
-	resp.Text = fmt.Sprintf("Removed user%s from tag \"%s\"", func() string {
-		if len(mentions) != 1 {
-			return "s"
-		}
-		return ""
-	}(), name)
+	resp.Text = fmt.Sprintf("Added tag \"%s\"", name)
 
 	return []implementation.CommandResponse{
 		resp,

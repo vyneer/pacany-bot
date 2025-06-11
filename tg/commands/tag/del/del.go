@@ -1,4 +1,4 @@
-package adduser
+package del
 
 import (
 	"context"
@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	name              string = "adduser"
+	name              string = "del"
 	parentName        string = "tag"
-	help              string = "Add specified users to an existing tag"
-	arguments         string = "<tag_name> <username>..."
+	help              string = "Delete the specified tag"
+	arguments         string = "<tag_name>"
 	showInCommandList bool   = true
 	showInHelp        bool   = true
 	adminOnly         bool   = true
@@ -58,7 +58,7 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 		Capitalize: true,
 	}
 
-	if len(a.Args) < 2 {
+	if len(a.Args) != 1 {
 		resp.Text, _ = c.GetHelp()
 		return []implementation.CommandResponse{
 			resp,
@@ -72,29 +72,17 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 			resp,
 		}
 	}
-	mentions := util.FilterInvalidUsernames(a.Args[1:])
-	if len(mentions) == 0 {
-		resp.Text = tag_errors.ErrNoValidUsers.Error()
-		return []implementation.CommandResponse{
-			resp,
-		}
-	}
 
-	err := a.DB.AddMentionsToTag(ctx, a.ChatID, name, mentions...)
+	err := a.DB.RemoveTag(ctx, a.ChatID, name)
 	if err != nil {
-		slog.Warn("unable to add mentions to tag", "err", err)
+		slog.Warn("unable to remove tag", "err", err)
 		resp.Text = err.Error()
 		return []implementation.CommandResponse{
 			resp,
 		}
 	}
 
-	resp.Text = fmt.Sprintf("Added user%s to tag \"%s\"", func() string {
-		if len(mentions) != 1 {
-			return "s"
-		}
-		return ""
-	}(), name)
+	resp.Text = fmt.Sprintf("Removed tag \"%s\"", name)
 
 	return []implementation.CommandResponse{
 		resp,

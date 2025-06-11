@@ -1,9 +1,10 @@
-package remove
+package desc
 
 import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
 	tag_errors "github.com/vyneer/pacany-bot/tg/commands/tag/internal/errors"
@@ -11,10 +12,10 @@ import (
 )
 
 const (
-	name              string = "remove"
+	name              string = "desc"
 	parentName        string = "tag"
-	help              string = "Remove the specified tag"
-	arguments         string = "<tag_name>"
+	help              string = "Change the description of a specified tag"
+	arguments         string = "<tag_name> <tag_new_description>"
 	showInCommandList bool   = true
 	showInHelp        bool   = true
 	adminOnly         bool   = true
@@ -58,7 +59,7 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 		Capitalize: true,
 	}
 
-	if len(a.Args) != 1 {
+	if len(a.Args) < 2 {
 		resp.Text, _ = c.GetHelp()
 		return []implementation.CommandResponse{
 			resp,
@@ -73,16 +74,24 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 		}
 	}
 
-	err := a.DB.RemoveTag(ctx, a.ChatID, name)
+	descriptionSplit := []string{}
+	for _, v := range a.Args[1:] {
+		if util.IsValidUserName(v) {
+			break
+		}
+		descriptionSplit = append(descriptionSplit, v)
+	}
+	description := strings.Join(descriptionSplit, " ")
+
+	err := a.DB.ChangeDescriptionOfTag(ctx, a.ChatID, name, description)
 	if err != nil {
-		slog.Warn("unable to remove tag", "err", err)
-		resp.Text = err.Error()
+		slog.Warn("unable to change tag description", "err", err)
 		return []implementation.CommandResponse{
 			resp,
 		}
 	}
 
-	resp.Text = fmt.Sprintf("Removed tag \"%s\"", name)
+	resp.Text = fmt.Sprintf("Changed tags description to \"%s\"", description)
 
 	return []implementation.CommandResponse{
 		resp,

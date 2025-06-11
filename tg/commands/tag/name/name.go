@@ -1,4 +1,4 @@
-package removedesc
+package name
 
 import (
 	"context"
@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	name              string = "removedesc"
+	name              string = "name"
 	parentName        string = "tag"
-	help              string = "Remove the description of a specified tag"
-	arguments         string = "<tag_name>"
+	help              string = "Rename the specified tag"
+	arguments         string = "<tag_old_name> <tag_new_name>"
 	showInCommandList bool   = true
 	showInHelp        bool   = true
 	adminOnly         bool   = true
@@ -58,31 +58,46 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 		Capitalize: true,
 	}
 
-	if len(a.Args) != 1 {
+	if len(a.Args) != 2 {
 		resp.Text, _ = c.GetHelp()
 		return []implementation.CommandResponse{
 			resp,
 		}
 	}
 
-	name := a.Args[0]
-	if !util.IsValidTagName(name) {
+	oldName := a.Args[0]
+	if !util.IsValidTagName(oldName) {
 		resp.Text = tag_errors.ErrInvalidTag.Error()
 		return []implementation.CommandResponse{
 			resp,
 		}
 	}
 
-	err := a.DB.ChangeDescriptionOfTag(ctx, a.ChatID, name, "")
+	newName := a.Args[1]
+	if !util.IsValidTagName(newName) {
+		resp.Text = tag_errors.ErrInvalidTag.Error()
+		return []implementation.CommandResponse{
+			resp,
+		}
+	}
+
+	if oldName == newName {
+		resp.Text = "Identical name provided"
+		return []implementation.CommandResponse{
+			resp,
+		}
+	}
+
+	err := a.DB.RenameTag(ctx, a.ChatID, oldName, newName)
 	if err != nil {
-		slog.Warn("unable to remove tag description", "err", err)
+		slog.Warn("unable to rename tag", "err", err)
 		resp.Text = err.Error()
 		return []implementation.CommandResponse{
 			resp,
 		}
 	}
 
-	resp.Text = "Removed tags description"
+	resp.Text = fmt.Sprintf("Renamed tag \"%s\" to \"%s\"", oldName, newName)
 
 	return []implementation.CommandResponse{
 		resp,
