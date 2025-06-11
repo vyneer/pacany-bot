@@ -1,12 +1,14 @@
 package tag
 
 import (
+	"github.com/vyneer/pacany-bot/config"
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/add"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/adduser"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/changedesc"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/help"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/info"
+	"github.com/vyneer/pacany-bot/tg/commands/tag/internal/util"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/remove"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/removedesc"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/removeuser"
@@ -16,15 +18,17 @@ import (
 
 const name string = "tag"
 
-func init() {
-	implementation.CreateParentCommand(implementation.ParentCommand{
-		Name:        name,
-		Description: "tagging",
-		Initialize:  initialize,
-	})
+type tag struct{}
+
+func (t *tag) Name() string {
+	return "tag"
 }
 
-func initialize() {
+func (t *tag) Description() string {
+	return "tagging"
+}
+
+func (t *tag) Initialize() {
 	implementation.EnableParentCommand(name)
 
 	implementation.CreateInteractableCommand(help.New)
@@ -37,4 +41,12 @@ func initialize() {
 	implementation.CreateInteractableCommand(removeuser.New)
 	implementation.CreateInteractableCommand(info.New)
 	implementation.CreateAutomaticCommand(scan.New)
+}
+
+func (t *tag) Configure(cfg *config.Config) {
+	util.SetTagPrefix(cfg.AllowedTagPrefixSymbols)
+}
+
+func init() {
+	implementation.CreateParentCommand(&tag{})
 }

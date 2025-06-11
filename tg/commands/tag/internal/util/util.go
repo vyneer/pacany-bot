@@ -1,11 +1,16 @@
 package util
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 )
 
-var prefixRegex = regexp.MustCompile(`(?i)^[@%#!&]{1}`)
+var prefixRegex *regexp.Regexp
+
+func SetTagPrefix(prefixString string) {
+	prefixRegex = regexp.MustCompile(fmt.Sprintf("(?i)^[%s]{1}", prefixString))
+}
 
 func IsValidUserName(username string) bool {
 	return strings.HasPrefix(username, "@") && len(username) > 1
