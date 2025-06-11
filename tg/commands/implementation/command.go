@@ -18,10 +18,10 @@ var (
 	automatic = map[string]Command{}
 )
 
-type ParentCommand struct {
-	Name        string
-	Description string
-	Initialize  func()
+type ParentCommand interface {
+	Name() string
+	Description() string
+	Initialize()
 }
 
 type CommandArgs struct {
@@ -48,12 +48,12 @@ type Command interface {
 }
 
 func CreateParentCommand(cmd ParentCommand) {
-	parent[cmd.Name] = cmd
+	parent[cmd.Name()] = cmd
 }
 
 func EnableParentCommand(name string) {
 	if cmd, ok := GetParentCommand(name); ok {
-		parentEnabled[cmd.Name] = cmd
+		parentEnabled[cmd.Name()] = cmd
 	}
 }
 
