@@ -8,7 +8,7 @@ require (
 	github.com/eko/gocache/lib/v4 v4.1.5
 	github.com/eko/gocache/store/go_cache/v4 v4.2.1
 	github.com/glebarez/sqlite v1.10.0
-	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
+	github.com/go-telegram/bot v1.16.0
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/mkrou/geonames v1.0.0
 	github.com/orandin/slog-gorm v1.0.1

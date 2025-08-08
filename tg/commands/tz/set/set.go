@@ -82,12 +82,12 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 	descriptionSplit := []string{}
 	descriptionSplit = append(descriptionSplit, a.Args[1:]...)
 
-	description := a.User.UserName
+	description := a.User.Username
 	if len(descriptionSplit) > 0 {
 		description = strings.Join(descriptionSplit, " ")
 	}
 
-	err = a.DB.NewTimezone(ctx, a.ChatID, a.User.UserName, tz.String(), description)
+	err = a.DB.NewTimezone(ctx, a.ChatID, a.User.Username, tz.String(), description)
 	if err != nil {
 		slog.Warn("unable to set timezone", "err", err)
 		resp.Text = err.Error()

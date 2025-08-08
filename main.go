@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/vyneer/pacany-bot/config"
 	"github.com/vyneer/pacany-bot/db"
@@ -52,8 +54,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := bot.Run(); err != nil {
-		slog.Error("tg bot run error", "err", err)
-		os.Exit(1)
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	bot.API.Start(ctx)
 }

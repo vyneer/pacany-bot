@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	tgbotapiModels "github.com/go-telegram/bot/models"
 	"github.com/vyneer/pacany-bot/db"
 )
 
@@ -27,7 +27,7 @@ type ParentCommand interface {
 type CommandArgs struct {
 	DB      *db.DB
 	ChatID  int64
-	User    *tgbotapi.User
+	User    *tgbotapiModels.User
 	IsAdmin bool
 	Args    []string
 }

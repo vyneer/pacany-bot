@@ -11,7 +11,8 @@ import (
 
 	"github.com/eko/gocache/lib/v4/cache"
 	gocache_store "github.com/eko/gocache/store/go_cache/v4"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	tgbotapi "github.com/go-telegram/bot"
+	tgbotapiModels "github.com/go-telegram/bot/models"
 	"github.com/google/shlex"
 	gocache "github.com/patrickmn/go-cache"
 	"github.com/vyneer/pacany-bot/config"
@@ -20,137 +21,142 @@ import (
 )
 
 type Bot struct {
-	api        *tgbotapi.BotAPI
-	adminCache *cache.Cache[[]tgbotapi.ChatMember]
+	API        *tgbotapi.Bot
+	adminCache *cache.Cache[[]tgbotapiModels.ChatMember]
 	db         *db.DB
 }
 
-func New(c *config.Config, tagDB *db.DB) (Bot, error) {
-	_ = tgbotapi.SetLogger(log.Default())
-	bot, err := tgbotapi.NewBotAPI(c.Token)
-	if err != nil {
-		return Bot{}, err
+func New(c *config.Config, tagDB *db.DB) (*Bot, error) {
+	gocacheClient := gocache.New(10*time.Minute, 15*time.Minute)
+	gocacheStore := gocache_store.NewGoCache(gocacheClient)
+	cacheManager := cache.New[[]tgbotapiModels.ChatMember](gocacheStore)
+
+	b := Bot{
+		db:         tagDB,
+		adminCache: cacheManager,
 	}
-	bot.Debug = c.Debug == 2
 
-	slog.Debug("authorized on bot", "account", bot.Self.UserName)
+	bot, err := tgbotapi.New(c.Token, tgbotapi.WithAllowedUpdates(tgbotapi.AllowedUpdates{
+		"message", "chat_member",
+	}), tgbotapi.WithDefaultHandler(handle(&b)))
+	if err != nil {
+		return nil, err
+	}
+	// bot.Debug = c.Debug == 2
+	botMe, err := bot.GetMe(context.Background())
+	if err != nil {
+		return nil, err
+	}
 
-	botCmdSlice := []tgbotapi.BotCommand{}
-	botCmdAdminSlice := []tgbotapi.BotCommand{}
+	slog.Debug("authorized on bot", "account", botMe.Username)
+
+	botCmdSlice := []tgbotapiModels.BotCommand{}
+	botCmdAdminSlice := []tgbotapiModels.BotCommand{}
 	for _, v := range implementation.GetInteractableOrder() {
 		if desc, show := v.GetDescription(); show {
 			if !v.IsAdminOnly() {
-				botCmdSlice = append(botCmdSlice, tgbotapi.BotCommand{
+				botCmdSlice = append(botCmdSlice, tgbotapiModels.BotCommand{
 					Command:     v.GetParentName() + v.GetName(),
 					Description: desc,
 				})
 			}
 
-			botCmdAdminSlice = append(botCmdAdminSlice, tgbotapi.BotCommand{
+			botCmdAdminSlice = append(botCmdAdminSlice, tgbotapiModels.BotCommand{
 				Command:     v.GetParentName() + v.GetName(),
 				Description: desc,
 			})
 		}
 	}
 
-	if _, err := bot.Request(tgbotapi.NewSetMyCommandsWithScope(
-		tgbotapi.NewBotCommandScopeAllGroupChats(),
-		botCmdSlice...,
-	)); err != nil {
-		return Bot{}, err
+	if _, err := bot.SetMyCommands(context.Background(), &tgbotapi.SetMyCommandsParams{
+		Commands: botCmdSlice,
+		Scope:    &tgbotapiModels.BotCommandScopeAllGroupChats{},
+	}); err != nil {
+		return nil, err
 	}
 
-	if _, err := bot.Request(tgbotapi.NewSetMyCommandsWithScope(
-		tgbotapi.NewBotCommandScopeAllChatAdministrators(),
-		botCmdAdminSlice...,
-	)); err != nil {
-		return Bot{}, err
+	if _, err := bot.SetMyCommands(context.Background(), &tgbotapi.SetMyCommandsParams{
+		Commands: botCmdAdminSlice,
+		Scope:    &tgbotapiModels.BotCommandScopeAllChatAdministrators{},
+	}); err != nil {
+		return nil, err
 	}
 
-	gocacheClient := gocache.New(10*time.Minute, 15*time.Minute)
-	gocacheStore := gocache_store.NewGoCache(gocacheClient)
-	cacheManager := cache.New[[]tgbotapi.ChatMember](gocacheStore)
+	b.API = bot
 
-	return Bot{
-		api:        bot,
-		db:         tagDB,
-		adminCache: cacheManager,
-	}, nil
+	return &b, nil
 }
 
-func (b *Bot) Run() error {
-	u := tgbotapi.NewUpdate(-1)
-	u.Timeout = 60
-	u.AllowedUpdates = []string{"message", "chat_member"}
-	updates := b.api.GetUpdatesChan(u)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	for update := range updates {
+func handle(b *Bot) tgbotapi.HandlerFunc {
+	return func(ctx context.Context, bot *tgbotapi.Bot, update *tgbotapiModels.Update) {
 		switch {
 		case update.ChatMember != nil:
-			_, err := b.setAdmins(ctx, update.ChatMember.Chat.ChatConfig())
+			_, err := b.setAdmins(ctx, update.ChatMember.Chat)
 			if err != nil {
 				slog.Warn("unable to update admin list", "err", err)
-				continue
+				return
 			}
-		case update.Message != nil && (update.Message.Chat.IsGroup() || update.Message.Chat.IsSuperGroup()):
+		case update.Message != nil && (update.Message.Chat.Type == "group" || update.Message.Chat.Type == "supergroup"):
 			chatID := update.Message.Chat.ID
 			text := update.Message.Text
-			username := update.Message.From.UserName
+			username := update.Message.From.Username
 
 			var commandResponses []implementation.CommandResponse
 
-			if !update.Message.IsCommand() {
+			if !isCommand(update.Message) {
 				commandResponses = implementation.GetAutomaticCommand("tagscan").Run(ctx, implementation.CommandArgs{
 					DB:     b.db,
 					ChatID: chatID,
-					User:   update.SentFrom(),
+					User:   update.Message.From,
 					Args: []string{
 						username,
 						text,
 					},
 				})
 			} else {
-				admins, err := b.getAdmins(ctx, update.Message.Chat.ChatConfig())
+				admins, err := b.getAdmins(ctx, update.Message.Chat)
 				if err != nil {
 					slog.Warn("unable to get admin list", "err", err)
-					continue
+					return
 				}
 
-				if slices.ContainsFunc(admins, func(cm tgbotapi.ChatMember) bool {
-					return cm.User.ID == update.Message.From.ID
+				if slices.ContainsFunc(admins, func(cm tgbotapiModels.ChatMember) bool {
+					return cm.Member.User.ID == update.Message.From.ID
 				}) {
-					commandResponses = b.command(ctx, true, chatID, update.SentFrom(), update.Message.Command(), update.Message.CommandArguments())
+					commandResponses = b.command(ctx, true, chatID, update.Message.From, command(update.Message), commandArguments(update.Message))
 				} else {
-					commandResponses = b.command(ctx, false, chatID, update.SentFrom(), update.Message.Command(), update.Message.CommandArguments())
+					commandResponses = b.command(ctx, false, chatID, update.Message.From, command(update.Message), commandArguments(update.Message))
 				}
 			}
 
 			for _, r := range commandResponses {
-				response := tgbotapi.NewMessage(update.Message.Chat.ID, "")
+				response := &tgbotapi.SendMessageParams{}
+				response.ChatID = update.Message.Chat.ID
 				response.Text = r.Text
+				if update.Message.Chat.IsForum {
+					response.MessageThreadID = update.Message.MessageThreadID
+				}
 				if r.Capitalize {
 					response.Text = b.capitalize(response.Text)
 				}
 				if r.Reply {
-					response.ReplyToMessageID = update.Message.MessageID
+					response.ReplyParameters = &tgbotapiModels.ReplyParameters{
+						ChatID:    update.Message.Chat.ID,
+						MessageID: update.Message.ID,
+					}
 				}
 
 				if len(response.Text) != 0 {
-					if _, err := b.api.Send(response); err != nil {
+					if _, err := bot.SendMessage(ctx, response); err != nil {
 						log.Panic(err)
 					}
 				}
 			}
 		}
 	}
-
-	return nil
 }
 
-func (b *Bot) command(ctx context.Context, admin bool, chatID int64, user *tgbotapi.User, command string, args string) []implementation.CommandResponse {
+func (b *Bot) command(ctx context.Context, admin bool, chatID int64, user *tgbotapiModels.User, command string, args string) []implementation.CommandResponse {
 	argsSplit, err := shlex.Split(args)
 	if err != nil {
 		slog.Warn("unable to shlex args string", "err", err)
@@ -177,10 +183,10 @@ func (b *Bot) command(ctx context.Context, admin bool, chatID int64, user *tgbot
 	})
 }
 
-func (b *Bot) getAdmins(ctx context.Context, c tgbotapi.ChatConfig) ([]tgbotapi.ChatMember, error) {
-	slog.Debug("getting admin list", "chatID", c.ChatID)
+func (b *Bot) getAdmins(ctx context.Context, c tgbotapiModels.Chat) ([]tgbotapiModels.ChatMember, error) {
+	slog.Debug("getting admin list", "chatID", c.ID)
 
-	admins, err := b.adminCache.Get(ctx, c.ChatID)
+	admins, err := b.adminCache.Get(ctx, c.ID)
 	if err == nil {
 		return admins, nil
 	}
@@ -193,17 +199,17 @@ func (b *Bot) getAdmins(ctx context.Context, c tgbotapi.ChatConfig) ([]tgbotapi.
 	return admins, nil
 }
 
-func (b *Bot) setAdmins(ctx context.Context, c tgbotapi.ChatConfig) ([]tgbotapi.ChatMember, error) {
-	slog.Debug("setting admin list", "chatID", c.ChatID)
+func (b *Bot) setAdmins(ctx context.Context, c tgbotapiModels.Chat) ([]tgbotapiModels.ChatMember, error) {
+	slog.Debug("setting admin list", "chatID", c.ID)
 
-	admins, err := b.api.GetChatAdministrators(tgbotapi.ChatAdministratorsConfig{
-		ChatConfig: c,
+	admins, err := b.API.GetChatAdministrators(ctx, &tgbotapi.GetChatAdministratorsParams{
+		ChatID: c.ID,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	if err := b.adminCache.Set(ctx, c.ChatID, admins); err != nil {
+	if err := b.adminCache.Set(ctx, c.ID, admins); err != nil {
 		return nil, err
 	}
 
@@ -216,4 +222,42 @@ func (b *Bot) capitalize(s string) string {
 	}
 	r := []rune(s)
 	return string(append([]rune{unicode.ToUpper(r[0])}, r[1:]...))
+}
+
+func isCommand(m *tgbotapiModels.Message) bool {
+	if len(m.Entities) == 0 {
+		return false
+	}
+
+	entity := m.Entities[0]
+	return entity.Offset == 0 && entity.Type == "bot_command"
+}
+
+func command(m *tgbotapiModels.Message) string {
+	if !isCommand(m) {
+		return ""
+	}
+
+	entity := m.Entities[0]
+	command := m.Text[1:entity.Length]
+
+	if i := strings.Index(command, "@"); i != -1 {
+		command = command[:i]
+	}
+
+	return command
+}
+
+func commandArguments(m *tgbotapiModels.Message) string {
+	if !isCommand(m) {
+		return ""
+	}
+
+	entity := m.Entities[0]
+
+	if len(m.Text) == entity.Length {
+		return ""
+	}
+
+	return m.Text[entity.Length+1:]
 }

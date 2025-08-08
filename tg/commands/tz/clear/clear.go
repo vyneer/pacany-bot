@@ -56,7 +56,7 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 		Capitalize: true,
 	}
 
-	err := a.DB.RemoveTimezone(ctx, a.ChatID, a.User.UserName)
+	err := a.DB.RemoveTimezone(ctx, a.ChatID, a.User.Username)
 	if err != nil {
 		slog.Warn("unable to remove timezone", "err", err)
 		resp.Text = err.Error()

@@ -79,7 +79,7 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 	}
 
 	i := slices.IndexFunc(tzs, func(t db.Timezone) bool {
-		return t.Username == a.User.UserName
+		return t.Username == a.User.Username
 	})
 	if i == -1 {
 		resp.Text = tz_errors.ErrTimezoneNotSet.Error()
@@ -115,7 +115,7 @@ func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []imple
 
 	timezoneMap := map[int][]db.Timezone{}
 	for _, v := range tzs {
-		if v.Username != a.User.UserName {
+		if v.Username != a.User.Username {
 			tz, _ := time.LoadLocation(v.Timezone)
 			_, offset := t.In(tz).Zone()
 			timezoneMap[offset] = append(timezoneMap[offset], v)
