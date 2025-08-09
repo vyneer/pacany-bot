@@ -3,8 +3,13 @@ package tz
 import (
 	"github.com/vyneer/pacany-bot/config"
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
+	"github.com/vyneer/pacany-bot/tg/commands/tz/add"
+	tzClear "github.com/vyneer/pacany-bot/tg/commands/tz/clear"
+	"github.com/vyneer/pacany-bot/tg/commands/tz/convert"
 	"github.com/vyneer/pacany-bot/tg/commands/tz/help"
-	"github.com/vyneer/pacany-bot/tg/commands/tz/internal/list"
+	"github.com/vyneer/pacany-bot/tg/commands/tz/info"
+	"github.com/vyneer/pacany-bot/tg/commands/tz/remove"
+	"github.com/vyneer/pacany-bot/tg/commands/tz/set"
 )
 
 const (
@@ -32,8 +37,13 @@ func (t *Parent) IsDisableable() bool {
 
 func (t *Parent) Initialize(_ *config.Config) []implementation.Command {
 	cmds := []implementation.Command{
-		help.New(),
+		set.New(),
+		tzClear.New(),
+		info.New(),
+		convert.New(),
+		add.New(),
+		remove.New(),
 	}
 
-	return append(cmds, list.Commands...)
+	return append([]implementation.Command{help.New(cmds)}, cmds...)
 }

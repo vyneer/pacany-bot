@@ -3,10 +3,18 @@ package tag
 import (
 	"github.com/vyneer/pacany-bot/config"
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
+	"github.com/vyneer/pacany-bot/tg/commands/tag/add"
+	"github.com/vyneer/pacany-bot/tg/commands/tag/del"
+	"github.com/vyneer/pacany-bot/tg/commands/tag/desc"
+	"github.com/vyneer/pacany-bot/tg/commands/tag/descdel"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/help"
+	"github.com/vyneer/pacany-bot/tg/commands/tag/info"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/internal/errors"
-	"github.com/vyneer/pacany-bot/tg/commands/tag/internal/list"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/internal/util"
+	"github.com/vyneer/pacany-bot/tg/commands/tag/kick"
+	tagname "github.com/vyneer/pacany-bot/tg/commands/tag/name"
+	tagnew "github.com/vyneer/pacany-bot/tg/commands/tag/new"
+	"github.com/vyneer/pacany-bot/tg/commands/tag/scan"
 )
 
 const (
@@ -37,8 +45,16 @@ func (t *Parent) Initialize(cfg *config.Config) []implementation.Command {
 	errors.SetErrInvalidTag(cfg.AllowedTagPrefixSymbols)
 
 	cmds := []implementation.Command{
-		help.New(),
+		tagnew.New(),
+		del.New(),
+		tagname.New(),
+		desc.New(),
+		descdel.New(),
+		add.New(),
+		kick.New(),
+		info.New(),
+		scan.New(),
 	}
 
-	return append(cmds, list.Commands...)
+	return append([]implementation.Command{help.New(cmds)}, cmds...)
 }
