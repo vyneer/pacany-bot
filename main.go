@@ -10,9 +10,9 @@ import (
 	"github.com/vyneer/pacany-bot/db"
 	"github.com/vyneer/pacany-bot/geonames"
 	"github.com/vyneer/pacany-bot/tg"
-	_ "github.com/vyneer/pacany-bot/tg/commands/help"
-	_ "github.com/vyneer/pacany-bot/tg/commands/tag"
-	_ "github.com/vyneer/pacany-bot/tg/commands/tz"
+	"github.com/vyneer/pacany-bot/tg/commands/help"
+	"github.com/vyneer/pacany-bot/tg/commands/tag"
+	"github.com/vyneer/pacany-bot/tg/commands/tz"
 )
 
 func main() {
@@ -25,7 +25,11 @@ func main() {
 
 	slog.SetDefault(slog.New(h))
 
-	c, err := config.New()
+	c, err := config.New([]config.ParentCommand{
+		help.NewHelp(),
+		tag.NewTag(),
+		tz.NewTZ(),
+	})
 	if err != nil {
 		slog.Error("config error", "err", err)
 		os.Exit(1)

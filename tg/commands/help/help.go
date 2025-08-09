@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/vyneer/pacany-bot/config"
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
 )
 
@@ -24,10 +25,14 @@ const (
 	adminOnly         bool   = false
 )
 
-type Command struct{}
+type Command struct {
+	parentList []config.ParentCommand
+}
 
-func New() implementation.InteractableCommand {
-	return &Command{}
+func New(parentList []config.ParentCommand) implementation.InteractableCommand {
+	return &Command{
+		parentList: parentList,
+	}
 }
 
 func (c *Command) GetName() string {
@@ -61,12 +66,11 @@ func (c *Command) Run(_ context.Context, _ implementation.CommandArgs) []impleme
 		"Multi-purpose Telegram bot, check other help commands for more details.",
 	}
 
-	parents := implementation.GetEnabledParentCommands()
-	if len(parents) > 0 {
+	if len(c.parentList) > 0 {
 		subText := []string{
 			"Currently enabled functions:",
 		}
-		for _, parentCommand := range parents {
+		for _, parentCommand := range c.parentList {
 			if parentCommand.Description() == "" {
 				continue
 			}

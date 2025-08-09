@@ -14,6 +14,13 @@ var ErrNoToken = errors.New("no token provided")
 
 var allowedSymbols = []rune{'@', '%', '#', '!', '&'}
 
+type ParentCommand interface {
+	Name() string
+	Description() string
+	IsDisableable() bool
+	Initialize(cfg *Config) []implementation.Command
+}
+
 type Config struct {
 	Token                   string
 	DBPath                  string
@@ -21,18 +28,16 @@ type Config struct {
 	Geonames                bool
 	AllowedTagPrefixSymbols string
 
+	parentList  []ParentCommand
 	commandList []implementation.Command
 }
 
-type ConfigurableCommand interface {
-	Configure(cfg *Config)
-}
-
-func New() (Config, error) {
+func New(cmds []ParentCommand) (Config, error) {
 	c := Config{
 		Geonames:                true,
 		AllowedTagPrefixSymbols: "@%#!&",
 
+		parentList:  cmds,
 		commandList: []implementation.Command{},
 	}
 
@@ -85,18 +90,18 @@ func New() (Config, error) {
 		cmdsSplit = strings.Split(com, ",")
 	}
 
-	for parentName, parentCommand := range implementation.GetAllParentCommands() {
-		if slices.Contains(cmdsSplit, parentName) || len(cmdsSplit) == 0 || !parentCommand.IsDisableable() {
-			c.commandList = append(c.commandList, parentCommand.Initialize()...)
-			slog.Info("initialized command", "name", parentName)
-			if configurable, ok := parentCommand.(ConfigurableCommand); ok {
-				configurable.Configure(&c)
-				slog.Info("configured command", "name", parentName)
-			}
+	for _, parentCommand := range cmds {
+		if slices.Contains(cmdsSplit, parentCommand.Name()) || len(cmdsSplit) == 0 || !parentCommand.IsDisableable() {
+			c.commandList = append(c.commandList, parentCommand.Initialize(&c)...)
+			slog.Info("initialized command", "name", parentCommand.Name())
 		}
 	}
 
 	return c, nil
+}
+
+func (c *Config) GetParentCommandList() []ParentCommand {
+	return c.parentList
 }
 
 func (c *Config) GetCommandList() []implementation.Command {

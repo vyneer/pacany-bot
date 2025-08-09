@@ -8,18 +8,6 @@ import (
 	"github.com/vyneer/pacany-bot/db"
 )
 
-var (
-	parent        = map[string]ParentCommand{}
-	parentEnabled = map[string]ParentCommand{}
-)
-
-type ParentCommand interface {
-	Name() string
-	Description() string
-	IsDisableable() bool
-	Initialize() []Command
-}
-
 type CommandArgs struct {
 	DB      *db.DB
 	ChatID  int64
@@ -51,27 +39,4 @@ type AutomaticCommand interface {
 	Command
 	GetIdentifier() string
 	GetMatcher() *regexp.Regexp
-}
-
-func CreateParentCommand(cmd ParentCommand) {
-	parent[cmd.Name()] = cmd
-}
-
-func EnableParentCommand(name string) {
-	if cmd, ok := GetParentCommand(name); ok {
-		parentEnabled[cmd.Name()] = cmd
-	}
-}
-
-func GetParentCommand(name string) (ParentCommand, bool) {
-	c, ok := parent[name]
-	return c, ok
-}
-
-func GetAllParentCommands() map[string]ParentCommand {
-	return parent
-}
-
-func GetEnabledParentCommands() map[string]ParentCommand {
-	return parentEnabled
 }

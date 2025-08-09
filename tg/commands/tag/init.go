@@ -9,37 +9,36 @@ import (
 	"github.com/vyneer/pacany-bot/tg/commands/tag/internal/util"
 )
 
-const name string = "tag"
+const (
+	name        string = "tag"
+	description string = "tagging"
+)
 
-type tag struct{}
+type Parent struct{}
 
-func (t *tag) Name() string {
-	return "tag"
+func NewTag() *Parent {
+	return &Parent{}
 }
 
-func (t *tag) Description() string {
-	return "tagging"
+func (t *Parent) Name() string {
+	return name
 }
 
-func (t *tag) IsDisableable() bool {
+func (t *Parent) Description() string {
+	return description
+}
+
+func (t *Parent) IsDisableable() bool {
 	return true
 }
 
-func (t *tag) Initialize() []implementation.Command {
-	implementation.EnableParentCommand(name)
+func (t *Parent) Initialize(cfg *config.Config) []implementation.Command {
+	util.SetTagPrefix(cfg.AllowedTagPrefixSymbols)
+	errors.SetErrInvalidTag(cfg.AllowedTagPrefixSymbols)
 
 	cmds := []implementation.Command{
 		help.New(),
 	}
 
 	return append(cmds, list.Commands...)
-}
-
-func (t *tag) Configure(cfg *config.Config) {
-	util.SetTagPrefix(cfg.AllowedTagPrefixSymbols)
-	errors.SetErrInvalidTag(cfg.AllowedTagPrefixSymbols)
-}
-
-func init() {
-	implementation.CreateParentCommand(&tag{})
 }

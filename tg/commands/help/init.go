@@ -1,31 +1,30 @@
 package help
 
 import (
+	"github.com/vyneer/pacany-bot/config"
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
 )
 
-type helpCmd struct{}
+type Parent struct{}
 
-func (h *helpCmd) Name() string {
+func NewHelp() *Parent {
+	return &Parent{}
+}
+
+func (h *Parent) Name() string {
 	return "help"
 }
 
-func (h *helpCmd) Description() string {
+func (h *Parent) Description() string {
 	return ""
 }
 
-func (h *helpCmd) IsDisableable() bool {
+func (h *Parent) IsDisableable() bool {
 	return false
 }
 
-func (h *helpCmd) Initialize() []implementation.Command {
-	implementation.EnableParentCommand("help")
-
+func (h *Parent) Initialize(cfg *config.Config) []implementation.Command {
 	return []implementation.Command{
-		New(),
+		New(cfg.GetParentCommandList()),
 	}
-}
-
-func init() {
-	implementation.CreateParentCommand(&helpCmd{})
 }
