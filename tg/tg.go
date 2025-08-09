@@ -21,9 +21,10 @@ import (
 )
 
 type Bot struct {
-	bot        *tgbotapi.Bot
-	adminCache *cache.Cache[[]tgbotapiModels.ChatMember]
-	db         *db.DB
+	bot         *tgbotapi.Bot
+	botUsername string
+	adminCache  *cache.Cache[[]tgbotapiModels.ChatMember]
+	db          *db.DB
 }
 
 func New(c *config.Config, tagDB *db.DB) (*Bot, error) {
@@ -46,9 +47,10 @@ func New(c *config.Config, tagDB *db.DB) (*Bot, error) {
 	slog.Debug("authorized on bot", "account", botMe.Username)
 
 	b := Bot{
-		bot:        newBot,
-		adminCache: cacheManager,
-		db:         tagDB,
+		bot:         newBot,
+		botUsername: botMe.Username,
+		adminCache:  cacheManager,
+		db:          tagDB,
 	}
 
 	return &b, nil
@@ -85,12 +87,29 @@ func (b *Bot) RegisterCommands(commands []implementation.Command) error {
 				})
 			}
 
-			b.bot.RegisterHandler(
-				tgbotapi.HandlerTypeMessageText,
-				v.GetParentName()+v.GetName(),
-				tgbotapi.MatchTypeCommandStartOnly,
-				b.interactableCommandHandler(v),
-			)
+			shortCommandPrefix := v.GetParentName() + v.GetName()
+			longCommandPrefix := v.GetParentName() + v.GetName() + "@" + b.botUsername
+
+			b.bot.RegisterHandlerMatchFunc(func(update *tgbotapiModels.Update) bool {
+				if len(update.Message.Entities) == 0 {
+					return false
+				}
+
+				firstEntity := update.Message.Entities[0]
+
+				if firstEntity.Type == tgbotapiModels.MessageEntityTypeBotCommand {
+					if firstEntity.Offset != 0 {
+						return false
+					}
+
+					cmdString := update.Message.Text[firstEntity.Offset+1 : firstEntity.Offset+firstEntity.Length]
+					if cmdString == shortCommandPrefix || cmdString == longCommandPrefix {
+						return true
+					}
+				}
+
+				return false
+			}, b.interactableCommandHandler(v))
 		case implementation.AutomaticCommand:
 			b.bot.RegisterHandlerRegexp(tgbotapi.HandlerTypeMessageText, v.GetMatcher(), b.automaticCommandHandler(v))
 		}
