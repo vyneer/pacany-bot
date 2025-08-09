@@ -31,11 +31,6 @@ func New(c *config.Config, tagDB *db.DB) (*Bot, error) {
 	gocacheStore := gocache_store.NewGoCache(gocacheClient)
 	cacheManager := cache.New[[]tgbotapiModels.ChatMember](gocacheStore)
 
-	b := Bot{
-		db:         tagDB,
-		adminCache: cacheManager,
-	}
-
 	newBot, err := tgbotapi.New(c.Token, tgbotapi.WithAllowedUpdates(tgbotapi.AllowedUpdates{
 		"message", "chat_member",
 	}))
@@ -50,44 +45,16 @@ func New(c *config.Config, tagDB *db.DB) (*Bot, error) {
 
 	slog.Debug("authorized on bot", "account", botMe.Username)
 
-	botCmdSlice := []tgbotapiModels.BotCommand{}
-	botCmdAdminSlice := []tgbotapiModels.BotCommand{}
-	for _, v := range implementation.GetInteractableOrder() {
-		if desc, show := v.GetDescription(); show {
-			if !v.IsAdminOnly() {
-				botCmdSlice = append(botCmdSlice, tgbotapiModels.BotCommand{
-					Command:     v.GetParentName() + v.GetName(),
-					Description: desc,
-				})
-			}
-
-			botCmdAdminSlice = append(botCmdAdminSlice, tgbotapiModels.BotCommand{
-				Command:     v.GetParentName() + v.GetName(),
-				Description: desc,
-			})
-		}
+	b := Bot{
+		bot:        newBot,
+		adminCache: cacheManager,
+		db:         tagDB,
 	}
-
-	if _, err := newBot.SetMyCommands(context.Background(), &tgbotapi.SetMyCommandsParams{
-		Commands: botCmdSlice,
-		Scope:    &tgbotapiModels.BotCommandScopeAllGroupChats{},
-	}); err != nil {
-		return nil, err
-	}
-
-	if _, err := newBot.SetMyCommands(context.Background(), &tgbotapi.SetMyCommandsParams{
-		Commands: botCmdAdminSlice,
-		Scope:    &tgbotapiModels.BotCommandScopeAllChatAdministrators{},
-	}); err != nil {
-		return nil, err
-	}
-
-	b.bot = newBot
 
 	return &b, nil
 }
 
-func (b *Bot) RegisterCommands() {
+func (b *Bot) RegisterCommands(commands []implementation.Command) error {
 	tgbotapi.WithDefaultHandler(func(ctx context.Context, bot *tgbotapi.Bot, update *tgbotapiModels.Update) {
 		if update.ChatMember != nil {
 			_, err := b.setAdmins(ctx, bot, update.ChatMember.Chat)
@@ -98,18 +65,52 @@ func (b *Bot) RegisterCommands() {
 		}
 	})
 
-	for _, v := range implementation.GetInteractableOrder() {
-		b.bot.RegisterHandler(
-			tgbotapi.HandlerTypeMessageText,
-			v.GetParentName()+v.GetName(),
-			tgbotapi.MatchTypeCommandStartOnly,
-			b.interactableCommandHandler(v),
-		)
+	botCmdSlice := []tgbotapiModels.BotCommand{}
+	botCmdAdminSlice := []tgbotapiModels.BotCommand{}
+
+	for _, command := range commands {
+		switch v := command.(type) {
+		case implementation.InteractableCommand:
+			if desc, show := v.GetDescription(); show {
+				if !v.IsAdminOnly() {
+					botCmdSlice = append(botCmdSlice, tgbotapiModels.BotCommand{
+						Command:     v.GetParentName() + v.GetName(),
+						Description: desc,
+					})
+				}
+
+				botCmdAdminSlice = append(botCmdAdminSlice, tgbotapiModels.BotCommand{
+					Command:     v.GetParentName() + v.GetName(),
+					Description: desc,
+				})
+			}
+
+			b.bot.RegisterHandler(
+				tgbotapi.HandlerTypeMessageText,
+				v.GetParentName()+v.GetName(),
+				tgbotapi.MatchTypeCommandStartOnly,
+				b.interactableCommandHandler(v),
+			)
+		case implementation.AutomaticCommand:
+			b.bot.RegisterHandlerRegexp(tgbotapi.HandlerTypeMessageText, v.GetMatcher(), b.automaticCommandHandler(v))
+		}
 	}
 
-	for _, v := range implementation.GetAllAutomaticCommands() {
-		b.bot.RegisterHandlerRegexp(tgbotapi.HandlerTypeMessageText, v.GetMatcher(), b.automaticCommandHandler(v))
+	if _, err := b.bot.SetMyCommands(context.Background(), &tgbotapi.SetMyCommandsParams{
+		Commands: botCmdSlice,
+		Scope:    &tgbotapiModels.BotCommandScopeAllGroupChats{},
+	}); err != nil {
+		return err
 	}
+
+	if _, err := b.bot.SetMyCommands(context.Background(), &tgbotapi.SetMyCommandsParams{
+		Commands: botCmdAdminSlice,
+		Scope:    &tgbotapiModels.BotCommandScopeAllChatAdministrators{},
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (b *Bot) Start(ctx context.Context) {

@@ -3,18 +3,10 @@ package tag
 import (
 	"github.com/vyneer/pacany-bot/config"
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
-	"github.com/vyneer/pacany-bot/tg/commands/tag/add"
-	"github.com/vyneer/pacany-bot/tg/commands/tag/del"
-	"github.com/vyneer/pacany-bot/tg/commands/tag/desc"
-	"github.com/vyneer/pacany-bot/tg/commands/tag/descdel"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/help"
-	"github.com/vyneer/pacany-bot/tg/commands/tag/info"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/internal/errors"
+	"github.com/vyneer/pacany-bot/tg/commands/tag/internal/list"
 	"github.com/vyneer/pacany-bot/tg/commands/tag/internal/util"
-	"github.com/vyneer/pacany-bot/tg/commands/tag/kick"
-	tagname "github.com/vyneer/pacany-bot/tg/commands/tag/name"
-	tagnew "github.com/vyneer/pacany-bot/tg/commands/tag/new"
-	"github.com/vyneer/pacany-bot/tg/commands/tag/scan"
 )
 
 const name string = "tag"
@@ -29,19 +21,18 @@ func (t *tag) Description() string {
 	return "tagging"
 }
 
-func (t *tag) Initialize() {
+func (t *tag) IsDisableable() bool {
+	return true
+}
+
+func (t *tag) Initialize() []implementation.Command {
 	implementation.EnableParentCommand(name)
 
-	implementation.CreateInteractableCommand(help.New)
-	implementation.CreateInteractableCommand(tagnew.New)
-	implementation.CreateInteractableCommand(del.New)
-	implementation.CreateInteractableCommand(tagname.New)
-	implementation.CreateInteractableCommand(desc.New)
-	implementation.CreateInteractableCommand(descdel.New)
-	implementation.CreateInteractableCommand(add.New)
-	implementation.CreateInteractableCommand(kick.New)
-	implementation.CreateInteractableCommand(info.New)
-	implementation.CreateAutomaticCommand(scan.New)
+	cmds := []implementation.Command{
+		help.New(),
+	}
+
+	return append(cmds, list.Commands...)
 }
 
 func (t *tag) Configure(cfg *config.Config) {

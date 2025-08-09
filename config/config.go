@@ -20,6 +20,8 @@ type Config struct {
 	Debug                   int
 	Geonames                bool
 	AllowedTagPrefixSymbols string
+
+	commandList []implementation.Command
 }
 
 type ConfigurableCommand interface {
@@ -30,6 +32,8 @@ func New() (Config, error) {
 	c := Config{
 		Geonames:                true,
 		AllowedTagPrefixSymbols: "@%#!&",
+
+		commandList: []implementation.Command{},
 	}
 
 	if t, ok := os.LookupEnv("TELEGRAM_TOKEN"); ok {
@@ -76,24 +80,25 @@ func New() (Config, error) {
 		}
 	}
 
+	cmdsSplit := []string{}
 	if com, ok := os.LookupEnv("COMMANDS"); ok {
-		split := strings.Split(com, ",")
-		for _, parentName := range split {
-			if parentCommand, ok := implementation.GetParentCommand(parentName); ok {
-				parentCommand.Initialize()
-				slog.Info("initialized command", "name", parentName)
-				if configurable, ok := parentCommand.(ConfigurableCommand); ok {
-					configurable.Configure(&c)
-					slog.Info("configured command", "name", parentName)
-				}
-			}
-		}
-	} else {
-		for parentName, parentCommand := range implementation.GetAllParentCommands() {
-			parentCommand.Initialize()
+		cmdsSplit = strings.Split(com, ",")
+	}
+
+	for parentName, parentCommand := range implementation.GetAllParentCommands() {
+		if slices.Contains(cmdsSplit, parentName) || len(cmdsSplit) == 0 || !parentCommand.IsDisableable() {
+			c.commandList = append(c.commandList, parentCommand.Initialize()...)
 			slog.Info("initialized command", "name", parentName)
+			if configurable, ok := parentCommand.(ConfigurableCommand); ok {
+				configurable.Configure(&c)
+				slog.Info("configured command", "name", parentName)
+			}
 		}
 	}
 
 	return c, nil
+}
+
+func (c *Config) GetCommandList() []implementation.Command {
+	return c.commandList
 }

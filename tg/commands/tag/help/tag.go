@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
+	"github.com/vyneer/pacany-bot/tg/commands/tag/internal/list"
 )
 
 const (
@@ -53,15 +54,17 @@ func (c *Command) IsAdminOnly() bool {
 func (c *Command) Run(_ context.Context, a implementation.CommandArgs) []implementation.CommandResponse {
 	helpSlice := []string{}
 
-	for _, v := range implementation.GetInteractableOrder() {
-		if !a.IsAdmin && v.IsAdminOnly() {
-			continue
-		}
-		if v.GetParentName() != parentName {
-			continue
-		}
-		if helpString, show := v.GetHelp(); show {
-			helpSlice = append(helpSlice, helpString)
+	for _, cmd := range list.Commands {
+		if v, ok := cmd.(implementation.InteractableCommand); ok {
+			if !a.IsAdmin && v.IsAdminOnly() {
+				continue
+			}
+			if v.GetParentName() != parentName {
+				continue
+			}
+			if helpString, show := v.GetHelp(); show {
+				helpSlice = append(helpSlice, helpString)
+			}
 		}
 	}
 

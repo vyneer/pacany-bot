@@ -57,6 +57,10 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	bot.RegisterCommands()
+	if err := bot.RegisterCommands(c.GetCommandList()); err != nil {
+		slog.Error("tg bot command registration error", "err", err)
+		return
+	}
+
 	bot.Start(ctx)
 }
