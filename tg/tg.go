@@ -58,6 +58,10 @@ func New(c *config.Config, tagDB *db.DB) (*Bot, error) {
 
 func (b *Bot) RegisterCommands(commands []implementation.Command) error {
 	tgbotapi.WithDefaultHandler(func(ctx context.Context, bot *tgbotapi.Bot, update *tgbotapiModels.Update) {
+		// this doesnt actually do what i expected it to do
+		// i wanted updates on member status changes (as in, promoted to admin from member, etc)
+		// but this only tracks when users get added to chat or get removed from chat as far as i can tell
+		// i'll keep it for now but idk if it's necessary
 		if update.ChatMember != nil {
 			_, err := b.setAdmins(ctx, bot, update.ChatMember.Chat)
 			if err != nil {
@@ -65,7 +69,7 @@ func (b *Bot) RegisterCommands(commands []implementation.Command) error {
 				return
 			}
 		}
-	})
+	})(b.bot)
 
 	botCmdSlice := []tgbotapiModels.BotCommand{}
 	botCmdAdminSlice := []tgbotapiModels.BotCommand{}
