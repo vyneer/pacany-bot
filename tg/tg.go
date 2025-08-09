@@ -176,8 +176,6 @@ func (b *Bot) setAdmins(ctx context.Context, bot *tgbotapi.Bot, c tgbotapiModels
 func (b *Bot) interactableCommandHandler(command implementation.InteractableCommand) tgbotapi.HandlerFunc {
 	return func(ctx context.Context, bot *tgbotapi.Bot, update *tgbotapiModels.Update) {
 		if isGroupChat(update) {
-			chatID := update.Message.Chat.ID
-
 			// this feels ugly, maybe worth making admin cache a completely separate structure
 			admins, err := b.getAdmins(ctx, bot, update.Message.Chat)
 			if err != nil {
@@ -186,7 +184,7 @@ func (b *Bot) interactableCommandHandler(command implementation.InteractableComm
 			}
 
 			isAdmin := slices.ContainsFunc(admins, func(cm tgbotapiModels.ChatMember) bool {
-				return cm.Member.User.ID == chatID
+				return (cm.Owner != nil && cm.Owner.User.ID == update.Message.From.ID) || (cm.Administrator != nil && cm.Administrator.User.ID == update.Message.From.ID)
 			})
 
 			if command.IsAdminOnly() && !isAdmin {
@@ -201,11 +199,11 @@ func (b *Bot) interactableCommandHandler(command implementation.InteractableComm
 				argsSplit = strings.Fields(commandArgs)
 			}
 
-			slog.Debug("running command", "chatID", chatID, "command", command.GetParentName()+command.GetName())
+			slog.Debug("running command", "chatID", update.Message.Chat.ID, "command", command.GetParentName()+command.GetName())
 
 			commandResponses := command.Run(ctx, implementation.CommandArgs{
 				DB:      b.db,
-				ChatID:  chatID,
+				ChatID:  update.Message.Chat.ID,
 				User:    update.Message.From,
 				IsAdmin: isAdmin,
 				Args:    argsSplit,
