@@ -21,7 +21,7 @@ import (
 )
 
 type Bot struct {
-	API        *tgbotapi.Bot
+	bot        *tgbotapi.Bot
 	adminCache *cache.Cache[[]tgbotapiModels.ChatMember]
 	db         *db.DB
 }
@@ -36,14 +36,14 @@ func New(c *config.Config, tagDB *db.DB) (*Bot, error) {
 		adminCache: cacheManager,
 	}
 
-	bot, err := tgbotapi.New(c.Token, tgbotapi.WithAllowedUpdates(tgbotapi.AllowedUpdates{
+	newBot, err := tgbotapi.New(c.Token, tgbotapi.WithAllowedUpdates(tgbotapi.AllowedUpdates{
 		"message", "chat_member",
-	}), tgbotapi.WithDefaultHandler(handle(&b)))
+	}))
 	if err != nil {
 		return nil, err
 	}
-	// bot.Debug = c.Debug == 2
-	botMe, err := bot.GetMe(context.Background())
+
+	botMe, err := newBot.GetMe(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -68,122 +68,55 @@ func New(c *config.Config, tagDB *db.DB) (*Bot, error) {
 		}
 	}
 
-	if _, err := bot.SetMyCommands(context.Background(), &tgbotapi.SetMyCommandsParams{
+	if _, err := newBot.SetMyCommands(context.Background(), &tgbotapi.SetMyCommandsParams{
 		Commands: botCmdSlice,
 		Scope:    &tgbotapiModels.BotCommandScopeAllGroupChats{},
 	}); err != nil {
 		return nil, err
 	}
 
-	if _, err := bot.SetMyCommands(context.Background(), &tgbotapi.SetMyCommandsParams{
+	if _, err := newBot.SetMyCommands(context.Background(), &tgbotapi.SetMyCommandsParams{
 		Commands: botCmdAdminSlice,
 		Scope:    &tgbotapiModels.BotCommandScopeAllChatAdministrators{},
 	}); err != nil {
 		return nil, err
 	}
 
-	b.API = bot
+	b.bot = newBot
 
 	return &b, nil
 }
 
-func handle(b *Bot) tgbotapi.HandlerFunc {
-	return func(ctx context.Context, bot *tgbotapi.Bot, update *tgbotapiModels.Update) {
-		switch {
-		case update.ChatMember != nil:
-			_, err := b.setAdmins(ctx, update.ChatMember.Chat)
+func (b *Bot) RegisterCommands() {
+	tgbotapi.WithDefaultHandler(func(ctx context.Context, bot *tgbotapi.Bot, update *tgbotapiModels.Update) {
+		if update.ChatMember != nil {
+			_, err := b.setAdmins(ctx, bot, update.ChatMember.Chat)
 			if err != nil {
 				slog.Warn("unable to update admin list", "err", err)
 				return
 			}
-		case update.Message != nil && (update.Message.Chat.Type == "group" || update.Message.Chat.Type == "supergroup"):
-			chatID := update.Message.Chat.ID
-			text := update.Message.Text
-			username := update.Message.From.Username
-
-			var commandResponses []implementation.CommandResponse
-
-			if !isCommand(update.Message) {
-				commandResponses = implementation.GetAutomaticCommand("tagscan").Run(ctx, implementation.CommandArgs{
-					DB:     b.db,
-					ChatID: chatID,
-					User:   update.Message.From,
-					Args: []string{
-						username,
-						text,
-					},
-				})
-			} else {
-				admins, err := b.getAdmins(ctx, update.Message.Chat)
-				if err != nil {
-					slog.Warn("unable to get admin list", "err", err)
-					return
-				}
-
-				if slices.ContainsFunc(admins, func(cm tgbotapiModels.ChatMember) bool {
-					return cm.Member.User.ID == update.Message.From.ID
-				}) {
-					commandResponses = b.command(ctx, true, chatID, update.Message.From, command(update.Message), commandArguments(update.Message))
-				} else {
-					commandResponses = b.command(ctx, false, chatID, update.Message.From, command(update.Message), commandArguments(update.Message))
-				}
-			}
-
-			for _, r := range commandResponses {
-				response := &tgbotapi.SendMessageParams{}
-				response.ChatID = update.Message.Chat.ID
-				response.Text = r.Text
-				if update.Message.Chat.IsForum {
-					response.MessageThreadID = update.Message.MessageThreadID
-				}
-				if r.Capitalize {
-					response.Text = b.capitalize(response.Text)
-				}
-				if r.Reply {
-					response.ReplyParameters = &tgbotapiModels.ReplyParameters{
-						ChatID:    update.Message.Chat.ID,
-						MessageID: update.Message.ID,
-					}
-				}
-
-				if len(response.Text) != 0 {
-					if _, err := bot.SendMessage(ctx, response); err != nil {
-						log.Panic(err)
-					}
-				}
-			}
 		}
-	}
-}
-
-func (b *Bot) command(ctx context.Context, admin bool, chatID int64, user *tgbotapiModels.User, command string, args string) []implementation.CommandResponse {
-	argsSplit, err := shlex.Split(args)
-	if err != nil {
-		slog.Warn("unable to shlex args string", "err", err)
-		argsSplit = strings.Fields(args)
-	}
-
-	cmd := implementation.GetInteractableCommand(command)
-	if cmd == nil {
-		return []implementation.CommandResponse{}
-	}
-
-	if cmd.IsAdminOnly() && !admin {
-		return []implementation.CommandResponse{}
-	}
-
-	slog.Debug("running command", "chatID", chatID, "command", command)
-
-	return cmd.Run(ctx, implementation.CommandArgs{
-		DB:      b.db,
-		ChatID:  chatID,
-		User:    user,
-		IsAdmin: admin,
-		Args:    argsSplit,
 	})
+
+	for _, v := range implementation.GetInteractableOrder() {
+		b.bot.RegisterHandler(
+			tgbotapi.HandlerTypeMessageText,
+			v.GetParentName()+v.GetName(),
+			tgbotapi.MatchTypeCommandStartOnly,
+			b.interactableCommandHandler(v),
+		)
+	}
+
+	for _, v := range implementation.GetAllAutomaticCommands() {
+		b.bot.RegisterHandlerRegexp(tgbotapi.HandlerTypeMessageText, v.GetMatcher(), b.automaticCommandHandler(v))
+	}
 }
 
-func (b *Bot) getAdmins(ctx context.Context, c tgbotapiModels.Chat) ([]tgbotapiModels.ChatMember, error) {
+func (b *Bot) Start(ctx context.Context) {
+	b.bot.Start(ctx)
+}
+
+func (b *Bot) getAdmins(ctx context.Context, bot *tgbotapi.Bot, c tgbotapiModels.Chat) ([]tgbotapiModels.ChatMember, error) {
 	slog.Debug("getting admin list", "chatID", c.ID)
 
 	admins, err := b.adminCache.Get(ctx, c.ID)
@@ -191,7 +124,7 @@ func (b *Bot) getAdmins(ctx context.Context, c tgbotapiModels.Chat) ([]tgbotapiM
 		return admins, nil
 	}
 
-	admins, err = b.setAdmins(ctx, c)
+	admins, err = b.setAdmins(ctx, bot, c)
 	if err != nil {
 		return nil, err
 	}
@@ -199,10 +132,10 @@ func (b *Bot) getAdmins(ctx context.Context, c tgbotapiModels.Chat) ([]tgbotapiM
 	return admins, nil
 }
 
-func (b *Bot) setAdmins(ctx context.Context, c tgbotapiModels.Chat) ([]tgbotapiModels.ChatMember, error) {
+func (b *Bot) setAdmins(ctx context.Context, bot *tgbotapi.Bot, c tgbotapiModels.Chat) ([]tgbotapiModels.ChatMember, error) {
 	slog.Debug("setting admin list", "chatID", c.ID)
 
-	admins, err := b.API.GetChatAdministrators(ctx, &tgbotapi.GetChatAdministratorsParams{
+	admins, err := bot.GetChatAdministrators(ctx, &tgbotapi.GetChatAdministratorsParams{
 		ChatID: c.ID,
 	})
 	if err != nil {
@@ -216,7 +149,80 @@ func (b *Bot) setAdmins(ctx context.Context, c tgbotapiModels.Chat) ([]tgbotapiM
 	return admins, nil
 }
 
-func (b *Bot) capitalize(s string) string {
+func (b *Bot) interactableCommandHandler(command implementation.InteractableCommand) tgbotapi.HandlerFunc {
+	return func(ctx context.Context, bot *tgbotapi.Bot, update *tgbotapiModels.Update) {
+		if isGroupChat(update) {
+			chatID := update.Message.Chat.ID
+
+			// this feels ugly, maybe worth making admin cache a completely separate structure
+			admins, err := b.getAdmins(ctx, bot, update.Message.Chat)
+			if err != nil {
+				slog.Warn("unable to get admin list", "err", err)
+				return
+			}
+
+			isAdmin := slices.ContainsFunc(admins, func(cm tgbotapiModels.ChatMember) bool {
+				return cm.Member.User.ID == chatID
+			})
+
+			if command.IsAdminOnly() && !isAdmin {
+				return
+			}
+
+			commandArgs := commandArguments(update.Message)
+
+			argsSplit, err := shlex.Split(commandArgs)
+			if err != nil {
+				slog.Warn("unable to shlex args string", "err", err)
+				argsSplit = strings.Fields(commandArgs)
+			}
+
+			slog.Debug("running command", "chatID", chatID, "command", command.GetParentName()+command.GetName())
+
+			commandResponses := command.Run(ctx, implementation.CommandArgs{
+				DB:      b.db,
+				ChatID:  chatID,
+				User:    update.Message.From,
+				IsAdmin: isAdmin,
+				Args:    argsSplit,
+			})
+
+			msgsToSend := transformCommandResponsesIntoMessages(update, commandResponses)
+			for _, m := range msgsToSend {
+				if _, err := bot.SendMessage(ctx, &m); err != nil {
+					log.Panic(err)
+				}
+			}
+		}
+	}
+}
+
+func (b *Bot) automaticCommandHandler(command implementation.AutomaticCommand) tgbotapi.HandlerFunc {
+	return func(ctx context.Context, bot *tgbotapi.Bot, update *tgbotapiModels.Update) {
+		if isGroupChat(update) {
+			slog.Debug("running automatic command", "chatID", update.Message.Chat.ID, "command", command.GetIdentifier())
+
+			commandResponses := command.Run(ctx, implementation.CommandArgs{
+				DB:     b.db,
+				ChatID: update.Message.Chat.ID,
+				User:   update.Message.From,
+				Args: []string{
+					update.Message.From.Username,
+					update.Message.Text,
+				},
+			})
+
+			msgsToSend := transformCommandResponsesIntoMessages(update, commandResponses)
+			for _, m := range msgsToSend {
+				if _, err := bot.SendMessage(ctx, &m); err != nil {
+					log.Panic(err)
+				}
+			}
+		}
+	}
+}
+
+func capitalize(s string) string {
 	if len(s) == 0 {
 		return s
 	}
@@ -224,35 +230,35 @@ func (b *Bot) capitalize(s string) string {
 	return string(append([]rune{unicode.ToUpper(r[0])}, r[1:]...))
 }
 
-func isCommand(m *tgbotapiModels.Message) bool {
-	if len(m.Entities) == 0 {
-		return false
+func transformCommandResponsesIntoMessages(update *tgbotapiModels.Update, resps []implementation.CommandResponse) []tgbotapi.SendMessageParams {
+	paramsSlice := []tgbotapi.SendMessageParams{}
+
+	for _, r := range resps {
+		response := tgbotapi.SendMessageParams{}
+		response.ChatID = update.Message.Chat.ID
+		response.Text = r.Text
+		if update.Message.Chat.IsForum {
+			response.MessageThreadID = update.Message.MessageThreadID
+		}
+		if r.Capitalize {
+			response.Text = capitalize(response.Text)
+		}
+		if r.Reply {
+			response.ReplyParameters = &tgbotapiModels.ReplyParameters{
+				ChatID:    update.Message.Chat.ID,
+				MessageID: update.Message.ID,
+			}
+		}
+
+		if len(response.Text) != 0 {
+			paramsSlice = append(paramsSlice, response)
+		}
 	}
 
-	entity := m.Entities[0]
-	return entity.Offset == 0 && entity.Type == "bot_command"
-}
-
-func command(m *tgbotapiModels.Message) string {
-	if !isCommand(m) {
-		return ""
-	}
-
-	entity := m.Entities[0]
-	command := m.Text[1:entity.Length]
-
-	if i := strings.Index(command, "@"); i != -1 {
-		command = command[:i]
-	}
-
-	return command
+	return paramsSlice
 }
 
 func commandArguments(m *tgbotapiModels.Message) string {
-	if !isCommand(m) {
-		return ""
-	}
-
 	entity := m.Entities[0]
 
 	if len(m.Text) == entity.Length {
@@ -260,4 +266,8 @@ func commandArguments(m *tgbotapiModels.Message) string {
 	}
 
 	return m.Text[entity.Length+1:]
+}
+
+func isGroupChat(update *tgbotapiModels.Update) bool {
+	return update.Message != nil && (update.Message.Chat.Type == "group" || update.Message.Chat.Type == "supergroup")
 }

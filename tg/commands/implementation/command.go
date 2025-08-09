@@ -3,6 +3,7 @@ package implementation
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	tgbotapiModels "github.com/go-telegram/bot/models"
 	"github.com/vyneer/pacany-bot/db"
@@ -12,10 +13,10 @@ var (
 	parent        = map[string]ParentCommand{}
 	parentEnabled = map[string]ParentCommand{}
 
-	interactable      = map[string]Command{}
-	interactableOrder = []Command{}
+	interactable      = map[string]InteractableCommand{}
+	interactableOrder = []InteractableCommand{}
 
-	automatic = map[string]Command{}
+	automatic = map[string]AutomaticCommand{}
 )
 
 type ParentCommand interface {
@@ -40,11 +41,21 @@ type CommandResponse struct {
 
 type Command interface {
 	Run(context.Context, CommandArgs) []CommandResponse
+}
+
+type InteractableCommand interface {
+	Command
 	GetName() string
 	GetParentName() string
 	GetHelp() (string, bool)
 	GetDescription() (string, bool)
 	IsAdminOnly() bool
+}
+
+type AutomaticCommand interface {
+	Command
+	GetIdentifier() string
+	GetMatcher() *regexp.Regexp
 }
 
 func CreateParentCommand(cmd ParentCommand) {
@@ -57,17 +68,17 @@ func EnableParentCommand(name string) {
 	}
 }
 
-func CreateInteractableCommand(cmd func() Command) {
+func CreateInteractableCommand(cmd func() InteractableCommand) {
 	c := cmd()
 
 	interactable[fmt.Sprintf("%s%s", c.GetParentName(), c.GetName())] = c
 	interactableOrder = append(interactableOrder, c)
 }
 
-func CreateAutomaticCommand(cmd func() Command) {
+func CreateAutomaticCommand(cmd func() AutomaticCommand) {
 	c := cmd()
 
-	automatic[fmt.Sprintf("%s%s", c.GetParentName(), c.GetName())] = c
+	automatic[c.GetIdentifier()] = c
 }
 
 func GetParentCommand(name string) (ParentCommand, bool) {
@@ -83,14 +94,18 @@ func GetEnabledParentCommands() map[string]ParentCommand {
 	return parentEnabled
 }
 
-func GetInteractableCommand(command string) Command {
+func GetInteractableCommand(command string) InteractableCommand {
 	return interactable[command]
 }
 
-func GetInteractableOrder() []Command {
+func GetInteractableOrder() []InteractableCommand {
 	return interactableOrder
 }
 
-func GetAutomaticCommand(command string) Command {
+func GetAutomaticCommand(command string) AutomaticCommand {
 	return automatic[command]
+}
+
+func GetAllAutomaticCommands() map[string]AutomaticCommand {
+	return automatic
 }
