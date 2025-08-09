@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"os"
-	"time"
+	"os/signal"
 
 	"github.com/vyneer/pacany-bot/config"
 	"github.com/vyneer/pacany-bot/db"
@@ -58,7 +58,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
 	if err := bot.RegisterCommands(c.GetCommandList()); err != nil {
