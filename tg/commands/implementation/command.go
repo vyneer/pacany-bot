@@ -2,32 +2,16 @@ package implementation
 
 import (
 	"context"
-	"fmt"
+	"regexp"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	tgbotapiModels "github.com/go-telegram/bot/models"
 	"github.com/vyneer/pacany-bot/db"
 )
-
-var (
-	parent        = map[string]ParentCommand{}
-	parentEnabled = map[string]ParentCommand{}
-
-	interactable      = map[string]Command{}
-	interactableOrder = []Command{}
-
-	automatic = map[string]Command{}
-)
-
-type ParentCommand interface {
-	Name() string
-	Description() string
-	Initialize()
-}
 
 type CommandArgs struct {
 	DB      *db.DB
 	ChatID  int64
-	User    *tgbotapi.User
+	User    *tgbotapiModels.User
 	IsAdmin bool
 	Args    []string
 }
@@ -40,6 +24,10 @@ type CommandResponse struct {
 
 type Command interface {
 	Run(context.Context, CommandArgs) []CommandResponse
+}
+
+type InteractableCommand interface {
+	Command
 	GetName() string
 	GetParentName() string
 	GetHelp() (string, bool)
@@ -47,50 +35,8 @@ type Command interface {
 	IsAdminOnly() bool
 }
 
-func CreateParentCommand(cmd ParentCommand) {
-	parent[cmd.Name()] = cmd
-}
-
-func EnableParentCommand(name string) {
-	if cmd, ok := GetParentCommand(name); ok {
-		parentEnabled[cmd.Name()] = cmd
-	}
-}
-
-func CreateInteractableCommand(cmd func() Command) {
-	c := cmd()
-
-	interactable[fmt.Sprintf("%s%s", c.GetParentName(), c.GetName())] = c
-	interactableOrder = append(interactableOrder, c)
-}
-
-func CreateAutomaticCommand(cmd func() Command) {
-	c := cmd()
-
-	automatic[fmt.Sprintf("%s%s", c.GetParentName(), c.GetName())] = c
-}
-
-func GetParentCommand(name string) (ParentCommand, bool) {
-	c, ok := parent[name]
-	return c, ok
-}
-
-func GetAllParentCommands() map[string]ParentCommand {
-	return parent
-}
-
-func GetEnabledParentCommands() map[string]ParentCommand {
-	return parentEnabled
-}
-
-func GetInteractableCommand(command string) Command {
-	return interactable[command]
-}
-
-func GetInteractableOrder() []Command {
-	return interactableOrder
-}
-
-func GetAutomaticCommand(command string) Command {
-	return automatic[command]
+type AutomaticCommand interface {
+	Command
+	GetIdentifier() string
+	GetMatcher() *regexp.Regexp
 }

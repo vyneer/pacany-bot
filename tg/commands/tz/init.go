@@ -1,6 +1,7 @@
 package tz
 
 import (
+	"github.com/vyneer/pacany-bot/config"
 	"github.com/vyneer/pacany-bot/tg/commands/implementation"
 	"github.com/vyneer/pacany-bot/tg/commands/tz/add"
 	tzClear "github.com/vyneer/pacany-bot/tg/commands/tz/clear"
@@ -11,30 +12,38 @@ import (
 	"github.com/vyneer/pacany-bot/tg/commands/tz/set"
 )
 
-const name string = "tz"
+const (
+	name        string = "tz"
+	description string = "timezones"
+)
 
-type tz struct{}
+type Parent struct{}
 
-func (t *tz) Name() string {
-	return "tz"
+func NewTZ() *Parent {
+	return &Parent{}
 }
 
-func (t *tz) Description() string {
-	return "timezones"
+func (t *Parent) Name() string {
+	return name
 }
 
-func (t *tz) Initialize() {
-	implementation.EnableParentCommand(name)
-
-	implementation.CreateInteractableCommand(help.New)
-	implementation.CreateInteractableCommand(set.New)
-	implementation.CreateInteractableCommand(tzClear.New)
-	implementation.CreateInteractableCommand(info.New)
-	implementation.CreateInteractableCommand(convert.New)
-	implementation.CreateInteractableCommand(add.New)
-	implementation.CreateInteractableCommand(remove.New)
+func (t *Parent) Description() string {
+	return description
 }
 
-func init() {
-	implementation.CreateParentCommand(&tz{})
+func (t *Parent) IsDisableable() bool {
+	return true
+}
+
+func (t *Parent) Initialize(_ *config.Config) []implementation.Command {
+	cmds := []implementation.Command{
+		set.New(),
+		tzClear.New(),
+		info.New(),
+		convert.New(),
+		add.New(),
+		remove.New(),
+	}
+
+	return append([]implementation.Command{help.New(cmds)}, cmds...)
 }

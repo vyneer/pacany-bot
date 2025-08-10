@@ -2,8 +2,8 @@ package scan
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -12,45 +12,21 @@ import (
 )
 
 const (
-	name              string = "scan"
-	parentName        string = "tag"
-	help              string = ""
-	arguments         string = ""
-	showInCommandList bool   = false
-	showInHelp        bool   = false
-	adminOnly         bool   = false
+	identifier string = "tag-scan"
 )
 
 type Command struct{}
 
-func New() implementation.Command {
+func New() implementation.AutomaticCommand {
 	return &Command{}
 }
 
-func (c *Command) GetName() string {
-	return name
+func (c *Command) GetIdentifier() string {
+	return identifier
 }
 
-func (c *Command) GetParentName() string {
-	return parentName
-}
-
-func (c *Command) GetHelp() (string, bool) {
-	if arguments == "" {
-		return fmt.Sprintf("/%s%s - %s", parentName, name, help), showInHelp
-	}
-	return fmt.Sprintf("/%s%s %s - %s", parentName, name, arguments, help), showInHelp
-}
-
-func (c *Command) GetDescription() (string, bool) {
-	if arguments == "" {
-		return help, showInCommandList
-	}
-	return fmt.Sprintf("%s - %s", arguments, help), showInCommandList
-}
-
-func (c *Command) IsAdminOnly() bool {
-	return adminOnly
+func (c *Command) GetMatcher() *regexp.Regexp {
+	return util.GetMatcherRegex()
 }
 
 func (c *Command) Run(ctx context.Context, a implementation.CommandArgs) []implementation.CommandResponse {

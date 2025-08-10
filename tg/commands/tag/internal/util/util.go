@@ -1,3 +1,4 @@
+//nolint:revive
 package util
 
 import (
@@ -6,10 +7,14 @@ import (
 	"strings"
 )
 
-var prefixRegex *regexp.Regexp
+var (
+	prefixRegex  *regexp.Regexp
+	matcherRegex *regexp.Regexp
+)
 
 func SetTagPrefix(prefixString string) {
 	prefixRegex = regexp.MustCompile(fmt.Sprintf("(?i)^[%s]{1}", prefixString))
+	matcherRegex = regexp.MustCompile(fmt.Sprintf("(?i)[%s]{1}", prefixString))
 }
 
 func IsValidUserName(username string) bool {
@@ -46,4 +51,8 @@ func FilterMentions(mentions []string, ignore string) ([]string, bool) {
 
 func IsValidTagName(name string) bool {
 	return prefixRegex.MatchString(name) && len(name) > 1
+}
+
+func GetMatcherRegex() *regexp.Regexp {
+	return matcherRegex
 }

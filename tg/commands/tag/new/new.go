@@ -23,7 +23,7 @@ const (
 
 type Command struct{}
 
-func New() implementation.Command {
+func New() implementation.InteractableCommand {
 	return &Command{}
 }
 

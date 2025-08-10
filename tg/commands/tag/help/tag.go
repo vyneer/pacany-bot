@@ -18,10 +18,14 @@ const (
 	adminOnly         bool   = false
 )
 
-type Command struct{}
+type Command struct {
+	commandList []implementation.Command
+}
 
-func New() implementation.Command {
-	return &Command{}
+func New(commandList []implementation.Command) implementation.InteractableCommand {
+	return &Command{
+		commandList: commandList,
+	}
 }
 
 func (c *Command) GetName() string {
@@ -53,15 +57,17 @@ func (c *Command) IsAdminOnly() bool {
 func (c *Command) Run(_ context.Context, a implementation.CommandArgs) []implementation.CommandResponse {
 	helpSlice := []string{}
 
-	for _, v := range implementation.GetInteractableOrder() {
-		if !a.IsAdmin && v.IsAdminOnly() {
-			continue
-		}
-		if v.GetParentName() != parentName {
-			continue
-		}
-		if helpString, show := v.GetHelp(); show {
-			helpSlice = append(helpSlice, helpString)
+	for _, cmd := range c.commandList {
+		if v, ok := cmd.(implementation.InteractableCommand); ok {
+			if !a.IsAdmin && v.IsAdminOnly() {
+				continue
+			}
+			if v.GetParentName() != parentName {
+				continue
+			}
+			if helpString, show := v.GetHelp(); show {
+				helpSlice = append(helpSlice, helpString)
+			}
 		}
 	}
 

@@ -17,38 +17,44 @@ import (
 	"github.com/vyneer/pacany-bot/tg/commands/tag/scan"
 )
 
-const name string = "tag"
+const (
+	name        string = "tag"
+	description string = "tagging"
+)
 
-type tag struct{}
+type Parent struct{}
 
-func (t *tag) Name() string {
-	return "tag"
+func NewTag() *Parent {
+	return &Parent{}
 }
 
-func (t *tag) Description() string {
-	return "tagging"
+func (t *Parent) Name() string {
+	return name
 }
 
-func (t *tag) Initialize() {
-	implementation.EnableParentCommand(name)
-
-	implementation.CreateInteractableCommand(help.New)
-	implementation.CreateInteractableCommand(tagnew.New)
-	implementation.CreateInteractableCommand(del.New)
-	implementation.CreateInteractableCommand(tagname.New)
-	implementation.CreateInteractableCommand(desc.New)
-	implementation.CreateInteractableCommand(descdel.New)
-	implementation.CreateInteractableCommand(add.New)
-	implementation.CreateInteractableCommand(kick.New)
-	implementation.CreateInteractableCommand(info.New)
-	implementation.CreateAutomaticCommand(scan.New)
+func (t *Parent) Description() string {
+	return description
 }
 
-func (t *tag) Configure(cfg *config.Config) {
+func (t *Parent) IsDisableable() bool {
+	return true
+}
+
+func (t *Parent) Initialize(cfg *config.Config) []implementation.Command {
 	util.SetTagPrefix(cfg.AllowedTagPrefixSymbols)
 	errors.SetErrInvalidTag(cfg.AllowedTagPrefixSymbols)
-}
 
-func init() {
-	implementation.CreateParentCommand(&tag{})
+	cmds := []implementation.Command{
+		tagnew.New(),
+		del.New(),
+		tagname.New(),
+		desc.New(),
+		descdel.New(),
+		add.New(),
+		kick.New(),
+		info.New(),
+		scan.New(),
+	}
+
+	return append([]implementation.Command{help.New(cmds)}, cmds...)
 }
